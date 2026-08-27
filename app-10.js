@@ -35,36 +35,10 @@ function openQuick(){openModal("⚡ Captura rápida",`<form class="form" onsubmi
 function capture(e){e.preventDefault();let txt=new FormData(e.target).get("text").trim();data.inbox.push({id:uid(),text:txt,createdAt:new Date().toISOString()});save();closeModal();showPage("inbox");toast("Capturado")}
 function renderInbox(){
  setHeader("⚡ Inbox","Capture primeiro. Organize depois.",`<button class="btn primary" onclick="openQuick()">＋ Capturar</button>`);
- document.getElementById("content").innerHTML=`<div class="card"><div class="list">${data.inbox.length?data.inbox.map(x=>`<div class="item"><div class="grow"><div class="item-title">${esc(x.text)}</div><div class="meta">${new Date(x.createdAt).toLocaleString("pt-BR")}</div></div><button class="btn small primary" onclick="inboxToTask('${x.id}')">Virar tarefa</button><button class="btn small danger" onclick="deleteInbox('${x.id}')">Excluir</button></div>`).join(""):`<div class="empty">Inbox vazia.</div>`}</div></div>`
+ document.getElementById("content").innerHTML=`<div class="card inbox-card"><div class="list inbox-list">${data.inbox.length?data.inbox.map(x=>`<div class="item inbox-item"><div class="grow"><div class="item-title">${esc(x.text)}</div><div class="meta">${new Date(x.createdAt).toLocaleString("pt-BR")}</div></div><div class="inbox-actions"><button class="btn small primary" onclick="inboxToTask('${x.id}')">Virar tarefa</button><button class="btn small danger" onclick="deleteInbox('${x.id}')">Excluir</button></div></div>`).join(""):`<div class="empty">Inbox vazia.</div>`}</div></div>`
 }
 function inboxToTask(id){let x=data.inbox.find(i=>i.id===id);if(!x)return;data.tasks.push({id:uid(),name:x.text,date:today(),startTime:"",estimate:30,actual:0,priority:"normal",status:"todo",project:"Geral",reschedules:0,createdAt:today(),updatedAt:new Date().toISOString(),calendarSync:true});data.inbox=data.inbox.filter(i=>i.id!==id);save();render();toast("Convertido em tarefa")}
 function deleteInbox(id){data.inbox=data.inbox.filter(i=>i.id!==id);save();render()}
 
-
-function periodDates(days){
- let end=today(),start=addDays(end,-(days-1));return {start,end}
-}
+function periodDates(days){let end=today(),start=addDays(end,-(days-1));return {start,end}}
 function filterTasksPeriod(start,end){return data.tasks.filter(t=>t.date&&t.date>=start&&t.date<=end)}
-function buildMetricsTXT(days=30,sections={summary:true,habits:true,tasks:true,time:true,planning:true,reviews:true,insights:true}){
- let {start,end}=periodDates(days),tasks=filterTasksPeriod(start,end),done=tasks.filter(t=>t.status==="done"),pending=tasks.filter(t=>t.status!=="done"),late=pending.filter(t=>t.date<today());
- let est=done.reduce((a,t)=>a+(+t.estimate||0),0),act=done.reduce((a,t)=>a+(+t.actual||0),0),rate=tasks.length?Math.round(done.length/tasks.length*100):0;
- let lines=[];
- lines.push("MEU PLANNER DIGITAL — RELATÓRIO DE MÉTRICAS",`Período: ${fmt(start,{day:"2-digit",month:"2-digit",year:"numeric"})} a ${fmt(end,{day:"2-digit",month:"2-digit",year:"numeric"})}`,"");
- let sep=()=>lines.push("========================================");
- if(sections.summary){sep();lines.push("RESUMO GERAL");sep();lines.push(`Tarefas no período: ${tasks.length}`,`Concluídas: ${done.length}`,`Pendentes: ${pending.length}`,`Atrasadas: ${late.length}`,`Taxa de conclusão: ${rate}%`,`Consistência de hábitos hoje: ${habitDayConsistency()}%`,"")}
- if(sections.habits){sep();lines.push("HÁBITOS");sep();for(let h of activeHabits()){let ds=[];for(let d=start;d<=end;d=addDays(d,1))ds.push(d);let cfg=configForDate(h,end),cons=habitConsistencyRange(h,ds),vals=ds.map(d=>habitLog(h.id,d)).filter(v=>v>0),avg=vals.length?Math.round(vals.reduce((a,v)=>a+v,0)/vals.length*10)/10:0,st=streakInfo(h),bst=bestStreakInfo(h);lines.push("",h.name,`Categoria: ${h.category}`,`Frequência: ${frequencyLabel(h)}`,`Meta mínima atual: ${cfg.minTarget} ${cfg.unit}`,`Meta ideal atual: ${cfg.target} ${cfg.unit}`,`Consistência no período: ${cons}%`,`Média registrada: ${avg} ${cfg.unit}`,`Sequência atual: ${st.count} ${st.unit}`,`Melhor sequência: ${bst.count} ${bst.unit}`)}lines.push("")}
- if(sections.tasks){sep();lines.push("TAREFAS");sep();lines.push(`Total: ${tasks.length}`,`Concluídas: ${done.length}`,`Pendentes: ${pending.length}`,`Atrasadas: ${late.length}`,`Reagendadas 3x ou mais: ${tasks.filter(t=>t.reschedules>=3).length}`,"");for(let t of tasks.filter(t=>t.reschedules>=3))lines.push(`- ${t.name}: reagendada ${t.reschedules}x`);lines.push("")}
- if(sections.time){sep();lines.push("TEMPO");sep();lines.push(`Tempo estimado concluído: ${mins(est)}`,`Tempo real concluído: ${mins(act)}`,`Diferença: ${mins(Math.abs(act-est))} ${act>=est?"a mais":"a menos"}`,`Diferença percentual: ${est?Math.round((act-est)/est*100):0}%`,"")}
- if(sections.planning){let ds=[];for(let d=start;d<=end;d=addDays(d,1))ds.push(d);let overloaded=ds.filter(d=>taskPlannedMinutes(d)>data.settings.dailyCapacity).length,plans=ds.filter(d=>data.dailyPlans[d]?.started).length;sep();lines.push("PLANEJAMENTO");sep();lines.push(`Dias planejados: ${plans}`,`Dias acima da capacidade: ${overloaded}`,`Capacidade diária padrão: ${mins(data.settings.dailyCapacity)}`,"")}
- if(sections.reviews){sep();lines.push("REVISÕES");sep();let revs=Object.entries(data.dailyPlans).filter(([d,p])=>d>=start&&d<=end&&p.closed);if(!revs.length)lines.push("Nenhuma revisão fechada no período.");for(let [d,p] of revs){lines.push("",fmt(d,{day:"2-digit",month:"2-digit",year:"numeric"}),`Humor: ${p.mood||"—"}`,`O que funcionou: ${p.review||"—"}`,`O que atrapalhou: ${p.blocker||"—"}`)}lines.push("")}
- if(sections.insights){sep();lines.push("INSIGHTS");sep();insightList().forEach(x=>lines.push("- "+x.replace(/<[^>]*>/g,"")));lines.push("")}
- sep();lines.push("GERADO EM");sep();lines.push(new Date().toLocaleString("pt-BR"));
- return lines.join("\n")
-}
-function openMetricsExport(){
- openModal("📄 Exportar relatório TXT",`<form class="form" onsubmit="exportMetricsTXT(event)">
- <label>Período<select name="days"><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="365">Últimos 365 dias</option></select></label>
- <div class="formgrid">
- ${[["summary","Resumo"],["habits","Hábitos"],["tasks","Tarefas"],["time","Tempo"],["planning","Planejamento"],["reviews","Revisões"],["insights","Insights"]].map(([v,l])=>`<label style="display:flex;align-items:center;gap:8px;color:var(--text)"><input style="width:auto" type="checkbox" name="${v}" checked> ${l}</label>`).join("")}
- </div><button class="btn primary">Gerar TXT</button></form>`)
-}
