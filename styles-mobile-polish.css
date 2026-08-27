@@ -1,6 +1,6 @@
-/* V7.3.3 — Mobile polish: navegação 5 itens e menu Mais */
+/* V7.3.4 — Mobile polish: 3 principais + Mais */
 @media(max-width:780px){
-  :root{--mobile-nav-h:68px}
+  :root{--mobile-nav-h:70px}
 
   #content{padding-top:10px!important;padding-bottom:24px!important}
   .top{min-height:64px!important;padding:12px 14px 10px!important}
@@ -39,24 +39,26 @@
   .mobile-fab{display:none!important}
 
   .side{height:calc(var(--mobile-nav-h) + env(safe-area-inset-bottom))!important;padding:6px 8px calc(6px + env(safe-area-inset-bottom))!important;box-shadow:0 -8px 24px rgba(0,0,0,.10)!important}
-  .nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:4px!important;overflow:visible!important;padding:0!important}
-  .nav button{min-width:0!important;min-height:50px!important;padding:6px 3px 4px!important;border-radius:13px!important;font-size:9.5px!important;line-height:1.18!important;letter-spacing:-.02em!important;white-space:normal!important}
+  .nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;overflow:visible!important;padding:0!important}
+  .nav button{min-width:0!important;min-height:52px!important;padding:7px 4px 5px!important;border-radius:14px!important;font-size:11px!important;line-height:1.18!important;letter-spacing:-.015em!important;white-space:normal!important}
   .nav button.active{background:color-mix(in srgb,var(--blue) 13%,transparent)!important;color:var(--blue)!important;box-shadow:none!important}
   .main{padding-bottom:calc(var(--mobile-nav-h) + 14px)!important}
   .toast{bottom:calc(var(--mobile-nav-h) + 16px + env(safe-area-inset-bottom))!important}
 
-  .mobile-more-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:4px 0 8px}
+  .mobile-more-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:4px 0 8px}
   .mobile-more-grid .btn{min-height:84px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:22px!important;border-radius:16px!important}
   .mobile-more-grid .btn span{font-size:12px;font-weight:700}
 
-  .dialog{border-radius:22px 22px 0 0!important}
-  .dialog-head{padding:12px 16px!important}
-  .dialog>#modalBody{padding:13px 16px 20px!important}
+  .dialog{border-radius:22px 22px 0 0!important;background:var(--surface)!important;color:var(--text)!important}
+  .dialog-head{padding:12px 16px!important;background:var(--surface)!important;border-bottom:1px solid var(--line)!important}
+  .dialog-head h2{color:var(--text)!important}
+  .dialog>#modalBody{padding:13px 16px 20px!important;background:var(--surface)!important}
+  .x{background:var(--surface-2)!important;color:var(--text)!important;border-color:var(--line)!important}
 }
 
 @media(max-width:430px){
   #content{width:calc(100% - 20px)!important}
   .grid.g4>.card{min-height:84px!important;padding:11px 12px!important}
   .grid.g4 .metric{font-size:23px!important}
-  .nav button{font-size:9px!important}
+  .nav button{font-size:10.5px!important}
 }
