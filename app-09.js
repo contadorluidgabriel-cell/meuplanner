@@ -48,7 +48,14 @@ function openHabit(id){
  <label>Pausar até<input name="pauseUntil" type="date" value="${esc(h.pauseUntil||"")}"></label>
  <label style="display:flex;align-items:center;gap:8px;color:var(--text)"><input style="width:auto" type="checkbox" name="paused" ${h.paused?"checked":""}> Hábito pausado</label>
  </div>
- <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">${id?`<div><button type="button" class="btn ${h.archived?"ok":"warn"}" onclick="archiveHabit('${h.id}')">${h.archived?"Restaurar":"Arquivar"}</button></div>`:"<span></span>"}<button class="btn primary">Salvar hábito</button></div></form>`)
+ <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">${id?`<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ${h.archived?"ok":"warn"}" onclick="archiveHabit('${h.id}')">${h.archived?"Restaurar":"Arquivar"}</button><button type="button" class="btn danger" onclick="deleteHabit('${h.id}')">Excluir hábito</button></div>`:"<span></span>"}<button class="btn primary">Salvar hábito</button></div></form>`)
+}
+function deleteHabit(id){
+ let h=data.habits.find(x=>x.id===id);if(!h)return;
+ if(!confirm(`Excluir o hábito “${h.name}”?\n\nO hábito e todo o histórico de registros dele serão apagados. Esta ação não pode ser desfeita.`))return;
+ data.habits=data.habits.filter(x=>x.id!==id);
+ Object.keys(data.habitLogs||{}).forEach(k=>{if(k.startsWith(id+"_"))delete data.habitLogs[k]});
+ save();closeModal();render();toast("Hábito excluído")
 }
 function saveHabit(e,id){
  e.preventDefault();let f=new FormData(e.target),h=id?data.habits.find(x=>x.id===id):normalizeHabit({id:uid()},data.habits.length);
