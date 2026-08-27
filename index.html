@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Meu Planner Digital — Hábitos, Tarefas e Revisão</title>
+<link rel="stylesheet" href="/styles-01.css">
+<link rel="stylesheet" href="/styles-02.css">
+<link rel="stylesheet" href="/styles-03.css">
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand">Meu <span>Planner Digital</span></div>
+  <nav class="nav" id="nav"></nav>
+  <div class="side-foot">
+    <div class="account-panel">
+      <div class="sync-pill"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Somente neste dispositivo</span></div>
+      <div class="account-email" id="accountEmail">Modo visitante</div>
+      <button class="btn" id="accountButton" style="width:100%;background:#111827;color:white;border-color:#374151" onclick="openAccount()">☁ Entrar para sincronizar</button>
+    </div>
+  </div>
+</aside>
+<main class="main">
+  <div class="top">
+    <div><h1 id="pageTitle">☀️ Meu Dia</h1><p id="pageSub"></p></div>
+    <div class="actions" id="topActions"></div>
+  </div>
+  <div id="content"></div>
+</main>
+</div>
+<div class="modal" id="modal"><div class="dialog"><div class="dialog-head"><h2 id="modalTitle"></h2><button class="x" onclick="closeModal()">✕</button></div><div id="modalBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="/app-01.js"></script>
+<script src="/app-02.js"></script>
+<script src="/app-03.js"></script>
+<script src="/app-04.js"></script>
+<script src="/app-05.js"></script>
+<script src="/app-06.js"></script>
+<script src="/app-07.js"></script>
+<script src="/app-08.js"></script>
+<script src="/app-09.js"></script>
+<script src="/app-10.js"></script>
+<script src="/app-11.js"></script>
+<script src="/app-12.js"></script>
+</body>
+</html>

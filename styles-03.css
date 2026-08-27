@@ -1,0 +1,396 @@
+
+[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{color-scheme:dark}
+@media(max-width:1050px){
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:1fr}
+  .heat{grid-template-columns:repeat(14,1fr)}
+}
+@media(max-width:780px){
+  :root{--sidebar:0px}
+  .side{
+    position:fixed;
+    inset:auto 0 0 0;
+    width:auto;
+    height:68px;
+    padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+    border:0;
+    border-top:1px solid var(--line);
+    background:rgba(255,255,255,.96);
+    backdrop-filter:blur(16px);
+  }
+  .brand,.side-foot{display:none}
+  .nav{
+    display:grid;
+    grid-template-columns:repeat(7,minmax(0,1fr));
+    gap:2px;
+    overflow:visible;
+    height:100%;
+    scrollbar-width:none;
+  }
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{
+    min-width:0;
+    color:var(--muted);
+    text-align:center;
+    padding:7px 2px;
+    background:transparent;
+    border-radius:10px;
+    font-size:9px;
+  }
+  .nav button:hover{background:var(--surface-2);color:var(--text)}
+  .nav button.active{background:var(--blue-soft);color:var(--blue);box-shadow:none}
+  .main{margin-left:0;width:100%;padding-bottom:76px}
+  .top{min-height:70px;padding:15px 16px;align-items:flex-start;flex-direction:column;background:rgba(246,247,249,.95)}
+  .top h1{font-size:22px}
+  .top p{display:none}
+  #content{width:calc(100% - 28px);padding:22px 0 38px}
+  .g4,.g3,.g2,.formgrid{grid-template-columns:1fr}
+  .card{padding:15px;border-radius:14px}
+  .metric{font-size:26px}
+  .section{margin-top:25px}
+  .habit-cal-stats,.habit-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .habit-month-day{min-height:58px;padding:5px}
+  .habit-month-day .dval{font-size:8.5px}
+  .daychecks{grid-template-columns:repeat(4,1fr)}
+  .time-row{grid-template-columns:1fr}
+  .task-tools,.appearance-grid{grid-template-columns:1fr}
+  .dialog{
+    width:100%;
+    max-height:90vh;
+    border-radius:18px 18px 0 0;
+    margin-top:auto;
+  }
+  .modal{align-items:flex-end;padding:0}
+}
+
+
+/* =========================================================
+   V6.7 — UX + RESPONSIVIDADE
+   Sem alteração de lógica funcional
+   ========================================================= */
+
+/* Better content rhythm */
+#content{
+  width:min(1180px,calc(100% - 56px));
+  padding-top:30px;
+}
+.section{margin-top:28px}
+.card{transition:border-color .14s ease,background .14s ease,box-shadow .14s ease}
+.card:hover{border-color:var(--line-strong)}
+
+/* Today page becomes more readable */
+.grid.g4>.card{
+  min-height:108px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.grid.g4 .metric{font-size:30px}
+
+/* Cleaner task interactions */
+.item{
+  position:relative;
+  padding-right:8px;
+}
+.item .btn.small{
+  opacity:.72;
+  transition:opacity .14s ease,transform .14s ease;
+}
+.item:hover .btn.small{opacity:1}
+.item-title{line-height:1.3}
+
+/* Better touch targets */
+.btn,.check,.habit-fav,.x{
+  touch-action:manipulation;
+}
+.check{min-width:22px;min-height:22px}
+.btn.small{min-height:32px}
+
+/* Habits: cleaner and easier to scan */
+.habit-row{padding:18px 2px}
+.habit-head{align-items:flex-start}
+.habit-state{row-gap:6px}
+.habit-quick{margin-top:10px}
+.habit-input{width:100px}
+.habit-reason{line-height:1.45}
+.weekdots{margin-top:14px}
+.wd{
+  min-height:42px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+/* Weekly page density */
+.time-row{
+  min-height:58px;
+  padding-top:12px;
+  padding-bottom:12px;
+}
+
+/* Better empty states */
+.empty{
+  min-height:96px;
+  display:grid;
+  place-items:center;
+  line-height:1.5;
+}
+
+/* Modal usability */
+.dialog{
+  overscroll-behavior:contain;
+}
+.dialog-head{
+  min-height:60px;
+}
+.dialog>#modalBody{
+  padding:20px;
+}
+
+/* Inputs */
+input,select,textarea{
+  font-size:14px;
+}
+select{cursor:pointer}
+
+/* Calendar readability */
+.habit-month-day{
+  min-height:78px;
+}
+.habit-month-day .dnum{font-size:12px}
+.habit-month-day .dval{line-height:1.25}
+
+/* Tablet */
+@media(max-width:980px){
+  #content{width:calc(100% - 36px)}
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:1fr}
+  .grid.g4>.card{min-height:96px}
+}
+
+/* Mobile app layout */
+@media(max-width:780px){
+  body{
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+
+  .side{
+    height:72px;
+    padding:7px 7px calc(7px + env(safe-area-inset-bottom));
+    box-shadow:0 -8px 26px rgba(15,23,42,.07);
+  }
+
+  .nav{
+    align-items:stretch;
+  }
+
+  .nav button{
+    min-width:0;
+    min-height:54px;
+    padding:7px 2px;
+    font-size:9px;
+    white-space:nowrap;
+  }
+
+  .main{
+    padding-bottom:82px;
+  }
+
+  .top{
+    position:sticky;
+    top:0;
+    z-index:25;
+    padding:13px 15px 12px;
+    min-height:66px;
+    gap:10px;
+  }
+
+  .top .actions{
+    width:100%;
+  }
+
+  .top .actions .btn{
+    flex:1;
+  }
+
+  #content{
+    width:calc(100% - 24px);
+    padding:18px 0 34px;
+  }
+
+  .grid.g4,
+  .grid.g3,
+  .grid.g2{
+    grid-template-columns:1fr!important;
+    gap:10px;
+  }
+
+  .grid.g4>.card{
+    min-height:86px;
+  }
+
+  .metric{font-size:26px}
+
+  .card{
+    border-radius:13px;
+    padding:14px;
+  }
+
+  .section{
+    margin:22px 0 10px;
+  }
+
+  .section h2{
+    font-size:14px;
+  }
+
+  .item{
+    align-items:flex-start;
+    flex-wrap:wrap;
+    padding:12px 2px;
+  }
+
+  .item .grow{
+    min-width:calc(100% - 65px);
+  }
+
+  .item .pill{
+    margin-left:32px;
+  }
+
+  .item .btn.small{
+    opacity:1;
+  }
+
+  .habit-row{
+    padding:15px 0;
+  }
+
+  .habit-head{
+    flex-wrap:wrap;
+  }
+
+  .habit-head .grow{
+    min-width:calc(100% - 60px);
+  }
+
+  .habit-head>.btn{
+    flex:1 1 auto;
+  }
+
+  .habit-state{
+    margin-left:0;
+  }
+
+  .habit-quick{
+    display:grid;
+    grid-template-columns:1fr auto auto auto;
+  }
+
+  .habit-input{
+    width:100%;
+    min-width:0;
+  }
+
+  .weekdots{
+    grid-template-columns:repeat(7,minmax(36px,1fr));
+    overflow-x:auto;
+    padding-bottom:2px;
+  }
+
+  .wd{
+    min-width:36px;
+    padding:6px 2px;
+  }
+
+  .time-row{
+    grid-template-columns:1fr;
+    gap:6px;
+    padding:12px 2px;
+  }
+
+  .formgrid{
+    grid-template-columns:1fr!important;
+  }
+
+  .full{
+    grid-column:auto;
+  }
+
+  .daychecks{
+    grid-template-columns:repeat(4,1fr);
+  }
+
+  .habit-cal-stats,
+  .habit-detail-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .habit-month-grid{
+    gap:3px;
+  }
+
+  .habit-month-day{
+    min-height:56px;
+    padding:5px;
+    border-radius:8px;
+  }
+
+  .habit-month-day .dnum{
+    font-size:11px;
+  }
+
+  .habit-month-day .dval{
+    font-size:8px;
+    margin-top:4px;
+  }
+
+  .dialog{
+    max-height:92vh;
+  }
+
+  .dialog-head{
+    padding:15px 16px;
+  }
+
+  .dialog>#modalBody{
+    padding:16px;
+  }
+
+  .mood{
+    justify-content:space-between;
+  }
+
+  .mood button{
+    flex:1;
+    min-width:48px;
+  }
+}
+
+/* Small phones */
+@media(max-width:430px){
+  #content{width:calc(100% - 18px)}
+  .top h1{font-size:20px}
+  .card{padding:13px}
+  .grid.g4>.card{min-height:80px}
+  .habit-cal-stats{grid-template-columns:1fr 1fr}
+  .habit-month-day .dval{display:none}
+  .habit-month-day{min-height:44px}
+  .habit-month-dow{font-size:9px}
+  .daychecks{grid-template-columns:repeat(3,1fr)}
+  .nav button{font-size:8px;letter-spacing:-.02em}
+}
+
+/* V7: conta e sincronização, sem alterar a estrutura visual da V6.8.2 */
+.account-panel{display:grid;gap:9px;margin-bottom:10px}
+.sync-pill{display:flex;align-items:center;gap:7px;color:#cbd5e1;font-size:12px;min-height:20px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;box-shadow:0 0 0 3px rgba(148,163,184,.13)}
+.sync-dot.online{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.14)}
+.sync-dot.busy{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.14)}
+.sync-dot.error{background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.14)}
+.account-email{font-size:11px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-note{padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--muted)}
+.sync-card{border-color:#dbeafe;background:linear-gradient(180deg,#fff,#f8fbff)}
+.sync-meta{display:grid;gap:5px;margin:3px 0 6px}
+@media(max-width:760px){.account-panel{display:none}}
+
