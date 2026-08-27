@@ -36,13 +36,13 @@ document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="
 
 function showPage(p){page=p;render()}
 function openMobileMore(){
- openModal("Mais",`<div class="mobile-more-grid"><button class="btn" onclick="closeModal();showPage('progress')">📈<span>Progresso</span></button><button class="btn" onclick="closeModal();showPage('inbox')">⚡<span>Inbox</span></button><button class="btn" onclick="closeModal();showPage('settings')">⚙<span>Ajustes</span></button></div>`)
+ openModal("Mais",`<div class="mobile-more-grid"><button class="btn" onclick="closeModal();showPage('week')">📅<span>Semana</span></button><button class="btn" onclick="closeModal();showPage('progress')">📈<span>Progresso</span></button><button class="btn" onclick="closeModal();showPage('inbox')">⚡<span>Inbox</span></button><button class="btn" onclick="closeModal();showPage('settings')">⚙<span>Ajustes</span></button></div>`)
 }
 function renderNav(){
  const nav=document.getElementById("nav"),isMobile=window.matchMedia?.("(max-width: 780px)").matches;
  if(!isMobile){nav.innerHTML=NAV.map(([id,l])=>`<button class="${page===id?"active":""}" onclick="showPage('${id}')">${l}</button>`).join("");return}
- const primary=NAV.filter(([id])=>["today","tasks","habits","week"].includes(id));
- const moreActive=["progress","inbox","settings"].includes(page);
+ const primary=NAV.filter(([id])=>["today","tasks","habits"].includes(id));
+ const moreActive=["week","progress","inbox","settings"].includes(page);
  nav.innerHTML=primary.map(([id,l])=>`<button class="${page===id?"active":""}" onclick="showPage('${id}')">${l}</button>`).join("")+`<button class="${moreActive?"active":""}" onclick="openMobileMore()">••• Mais</button>`
 }
 function setHeader(title,sub,actions=""){document.getElementById("pageTitle").textContent=title;document.getElementById("pageSub").textContent=sub;document.getElementById("topActions").innerHTML=actions}
