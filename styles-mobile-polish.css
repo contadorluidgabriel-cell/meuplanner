@@ -1,80 +1,61 @@
-/* V7.3.1 — Mobile polish: densidade, hierarquia e navegação */
+/* V7.3.2 — Mobile polish: visual mais leve, compacto e app-like */
 @media(max-width:780px){
-  :root{--mobile-nav-h:72px}
+  :root{--mobile-nav-h:68px}
 
-  /* Resumo do dia: quatro indicadores em 2x2 */
-  .grid.g4{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:10px!important;
-  }
-  .grid.g4>.card{
-    min-height:106px!important;
-    padding:14px 15px!important;
-  }
-  .grid.g4 .label{font-size:11px;letter-spacing:.08em}
-  .grid.g4 .metric{font-size:26px!important;line-height:1.05}
-  .grid.g4 .small{font-size:11.5px}
+  #content{padding-top:10px!important;padding-bottom:24px!important}
+  .top{min-height:64px!important;padding:12px 14px 10px!important}
+  .top h1{font-size:21px!important;letter-spacing:-.04em!important}
+  .top p{font-size:11px!important;margin-top:3px!important}
+  .top .actions{gap:7px!important}
+  .top .actions .btn{min-height:36px!important;padding:8px 12px!important;font-size:12px!important;border-radius:11px!important}
 
-  /* Ritmo vertical mais compacto */
-  #content{padding-top:12px!important}
-  .section{margin:20px 2px 9px!important}
-  .section h2{font-size:16px!important}
-  .empty{min-height:70px!important;padding:16px 12px}
-  .grid.g3 .empty{min-height:78px!important}
+  .card{border-radius:16px!important;box-shadow:none!important}
+  .grid.g4{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .grid.g4>.card{min-height:88px!important;padding:12px 13px!important}
+  .grid.g4 .label{font-size:10px!important;letter-spacing:.09em!important}
+  .grid.g4 .metric{font-size:24px!important;line-height:1!important;margin-top:8px!important}
+  .grid.g4 .small{font-size:10.5px!important;margin-top:4px!important}
+  .grid.g4 .progress{height:5px!important;margin-top:8px!important}
 
-  /* Cabeçalho: menos altura e menos peso */
-  .top{padding-bottom:11px!important}
-  .top h1{font-size:21px!important}
-  .top .actions .btn{min-height:38px!important;padding:9px 13px}
+  /* Mensagem diária mais discreta */
+  #content>.card:first-child{padding:13px 15px!important;margin-bottom:10px!important;border-radius:15px!important}
+  #content>.card:first-child b{font-size:13.5px!important;line-height:1.35!important}
+  #content>.card:first-child .small{font-size:10.5px!important;margin-top:3px!important}
 
-  /* Tarefa mobile: limpa e sem botões gigantes */
-  .item{padding:13px 0!important;gap:8px!important}
-  .item .grow{min-width:calc(100% - 58px)!important}
-  .item-title{font-size:15px!important}
-  .item .meta{font-size:11.5px}
-  .item .btn.small{min-height:34px!important;padding:7px 10px!important;font-size:11.5px}
-  .check{min-width:24px!important;min-height:24px!important}
+  .section{margin:18px 2px 8px!important;align-items:center!important}
+  .section h2{font-size:15px!important;letter-spacing:-.02em!important}
+  .section .btn.small{min-height:34px!important;padding:7px 10px!important;font-size:11px!important}
+  .empty{min-height:58px!important;padding:13px 10px!important;font-size:12px!important}
+  .grid.g3 .empty{min-height:64px!important}
 
-  /* FAB removido no mobile: ações já existem no cabeçalho e nas seções */
+  /* Itens de tarefa com hierarquia mais limpa */
+  .item{padding:12px 0!important;gap:8px!important;flex-wrap:wrap!important}
+  .item .grow{min-width:calc(100% - 58px)!important;flex:1!important}
+  .item-title{font-size:14px!important;font-weight:700!important;letter-spacing:-.015em}
+  .item .meta{font-size:10.5px!important;line-height:1.4!important}
+  .item .btn.small{min-height:32px!important;padding:6px 9px!important;font-size:10.5px!important;border-radius:10px!important}
+  .check{min-width:23px!important;min-height:23px!important;border-radius:7px!important}
+  .prio{width:7px!important;height:7px!important}
+
+  .btn.primary{box-shadow:0 6px 16px color-mix(in srgb,var(--blue) 18%,transparent)!important}
   .mobile-fab{display:none!important}
 
-  /* Barra inferior: todos os 7 destinos visíveis, sem scroll lateral */
-  .side{
-    height:calc(var(--mobile-nav-h) + env(safe-area-inset-bottom))!important;
-    padding:7px 6px calc(7px + env(safe-area-inset-bottom))!important;
-  }
-  .nav{
-    display:grid!important;
-    grid-template-columns:repeat(7,minmax(0,1fr))!important;
-    gap:2px!important;
-    overflow:visible!important;
-    padding:0!important;
-  }
-  .nav button{
-    min-width:0!important;
-    min-height:54px!important;
-    padding:7px 1px 5px!important;
-    border-radius:13px!important;
-    font-size:8px!important;
-    line-height:1.18!important;
-    letter-spacing:-.02em;
-    white-space:normal!important;
-  }
-  .nav button.active{
-    background:color-mix(in srgb,var(--blue) 16%,transparent)!important;
-    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--blue) 16%,transparent);
-  }
-  .main{padding-bottom:calc(var(--mobile-nav-h) + 18px)!important}
-  .toast{bottom:calc(var(--mobile-nav-h) + 20px + env(safe-area-inset-bottom))!important}
+  /* Navegação inferior mais leve. Mantemos todas as áreas acessíveis nesta rodada. */
+  .side{height:calc(var(--mobile-nav-h) + env(safe-area-inset-bottom))!important;padding:6px 5px calc(6px + env(safe-area-inset-bottom))!important;box-shadow:0 -8px 24px rgba(0,0,0,.10)!important}
+  .nav{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:1px!important;overflow:visible!important;padding:0!important}
+  .nav button{min-width:0!important;min-height:50px!important;padding:6px 1px 4px!important;border-radius:12px!important;font-size:7.5px!important;line-height:1.15!important;letter-spacing:-.025em!important;white-space:normal!important}
+  .nav button.active{background:color-mix(in srgb,var(--blue) 13%,transparent)!important;color:var(--blue)!important;box-shadow:none!important}
+  .main{padding-bottom:calc(var(--mobile-nav-h) + 14px)!important}
+  .toast{bottom:calc(var(--mobile-nav-h) + 16px + env(safe-area-inset-bottom))!important}
 
-  /* Bottom sheets mais elegantes */
   .dialog{border-radius:22px 22px 0 0!important}
-  .dialog-head{padding:13px 16px!important}
-  .dialog>#modalBody{padding:14px 16px 20px!important}
+  .dialog-head{padding:12px 16px!important}
+  .dialog>#modalBody{padding:13px 16px 20px!important}
 }
 
 @media(max-width:430px){
-  .grid.g4>.card{min-height:98px!important;padding:13px!important}
-  .grid.g4 .metric{font-size:24px!important}
-  .nav button{font-size:7.5px!important}
+  #content{width:calc(100% - 20px)!important}
+  .grid.g4>.card{min-height:84px!important;padding:11px 12px!important}
+  .grid.g4 .metric{font-size:23px!important}
+  .nav button{font-size:7px!important}
 }
