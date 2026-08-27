@@ -35,7 +35,16 @@ function closeModal(){document.getElementById("modal").classList.remove("show")}
 document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()})
 
 function showPage(p){page=p;render()}
-function renderNav(){document.getElementById("nav").innerHTML=NAV.map(([id,l])=>`<button class="${page===id?"active":""}" onclick="showPage('${id}')">${l}</button>`).join("")}
+function openMobileMore(){
+ openModal("Mais",`<div class="mobile-more-grid"><button class="btn" onclick="closeModal();showPage('progress')">📈<span>Progresso</span></button><button class="btn" onclick="closeModal();showPage('inbox')">⚡<span>Inbox</span></button><button class="btn" onclick="closeModal();showPage('settings')">⚙<span>Ajustes</span></button></div>`)
+}
+function renderNav(){
+ const nav=document.getElementById("nav"),isMobile=window.matchMedia?.("(max-width: 780px)").matches;
+ if(!isMobile){nav.innerHTML=NAV.map(([id,l])=>`<button class="${page===id?"active":""}" onclick="showPage('${id}')">${l}</button>`).join("");return}
+ const primary=NAV.filter(([id])=>["today","tasks","habits","week"].includes(id));
+ const moreActive=["progress","inbox","settings"].includes(page);
+ nav.innerHTML=primary.map(([id,l])=>`<button class="${page===id?"active":""}" onclick="showPage('${id}')">${l}</button>`).join("")+`<button class="${moreActive?"active":""}" onclick="openMobileMore()">••• Mais</button>`
+}
 function setHeader(title,sub,actions=""){document.getElementById("pageTitle").textContent=title;document.getElementById("pageSub").textContent=sub;document.getElementById("topActions").innerHTML=actions}
 function render(){applyPreferences();renderNav();({today:renderToday,tasks:renderTasks,habits:renderHabits,week:renderWeek,progress:renderProgress,inbox:renderInbox,settings:renderSettings}[page]||renderToday)();save()}
 
@@ -93,7 +102,7 @@ function renderExecution(plan){
  let todaysHabits=activeHabits().filter(h=>{let cfg=configForDate(h,today());if(cfg.freqType==="weekly")return weeklyHabitCount(h)<cfg.weeklyGoal&&!habitPausedOn(h,today());return isHabitScheduled(h,today())}).sort((a,b)=>Number(b.favorite)-Number(a.favorite)||a.order-b.order);
  return `<div class="section"><h2>🎯 Prioridades</h2><button class="btn small" onclick="openPriorityPicker()">Escolher prioridades</button></div>
  <div class="grid g3">${prio.length?prio.map(taskMini).join(""):`<div class="card empty">Nenhuma prioridade escolhida.</div>`}</div>
- <div class="section"><h2>📋 Tarefas de hoje</h2><button class="btn small primary" onclick="openTask()">＋ Tarefa</button></div>
+ <div class="section"><h2>📋 Tarefas de hoje</h2></div>
  <div class="card"><div class="list">${ts.length?ts.map(taskRow).join(""):`<div class="empty">Nada planejado para hoje.</div>`}</div></div>
  <div class="section"><h2>🔄 Hábitos de hoje</h2></div><div class="card">${todaysHabits.length?todaysHabits.map(habitTodayRow).join(""):`<div class="empty">Nenhum hábito programado para hoje.</div>`}</div>
  ${late.length?`<div class="section"><h2>⚠️ Pendências antigas</h2></div><div class="card"><div class="list">${late.map(taskRow).join("")}</div></div>`:""}
