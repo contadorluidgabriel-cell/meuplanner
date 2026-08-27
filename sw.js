@@ -6,14 +6,16 @@ self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim(
 self.addEventListener("push", (event) => {
   let payload = {};
   try { payload = event.data ? event.data.json() : {}; } catch { payload = { body: event.data ? event.data.text() : "" }; }
+  const kind = payload.kind || "Lembrete";
   const title = payload.title || "Meu Planner Digital";
   const options = {
-    body: payload.body || "Você tem um lembrete no Planner.",
+    body: payload.body || "Você tem algo importante no Planner.",
     icon: "/icon-192.png",
     badge: "/icon-192.png",
     tag: payload.tag || `planner-${Date.now()}`,
     renotify: true,
-    data: { url: payload.url || APP_URL, kind: payload.kind || "Lembrete" },
+    timestamp: payload.timestamp ? Number(payload.timestamp) : Date.now(),
+    data: { url: payload.url || APP_URL, kind },
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
