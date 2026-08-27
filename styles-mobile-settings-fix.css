@@ -1,0 +1,58 @@
+/* Configurações — correção de tema e acabamento mobile */
+@media(max-width:780px){
+  /* Nunca permitir card claro perdido dentro do tema escuro */
+  #content .sync-card,
+  #content .sync-card.form{
+    background:var(--card)!important;
+    color:var(--text)!important;
+    border:1px solid var(--line)!important;
+    box-shadow:none!important;
+  }
+  #content .sync-card strong,
+  #content .sync-card span,
+  #content .sync-card .sync-meta{color:var(--text)!important}
+  #content .sync-card .muted,
+  #content .sync-card .small{color:var(--muted)!important}
+
+  /* Tela de configurações mais compacta */
+  #content>.grid.g2{gap:10px!important}
+  #content>.grid.g2>.card.form{padding:15px!important;border-radius:17px!important;gap:11px!important}
+  #content>.grid.g2>.card.form>strong{font-size:15px!important;line-height:1.25!important;letter-spacing:-.02em!important}
+  #content>.grid.g2>.card.form .small{font-size:10.5px!important;line-height:1.45!important}
+  #content>.grid.g2>.card.form .sync-meta{gap:4px!important;line-height:1.4!important}
+  #content>.grid.g2>.card.form .sync-meta>span:first-child{font-size:12.5px!important}
+
+  /* Ações ocupam menos altura e parecem controles, não banners */
+  #content>.grid.g2>.card.form>.btn,
+  #content>.grid.g2>.card.form>div>.btn{
+    min-height:38px!important;
+    padding:8px 12px!important;
+    border-radius:11px!important;
+    font-size:11.5px!important;
+    width:auto!important;
+    align-self:flex-start!important;
+  }
+  #content>.grid.g2>.card.form>.btn.primary{width:100%!important;min-height:42px!important;font-size:12px!important}
+  #content>.grid.g2>.card.form>.btn+.btn{margin-top:0!important}
+
+  /* Google Agenda e conta: ações com hierarquia clara */
+  #content .sync-card>.btn.primary{width:100%!important}
+  #content>.grid.g2>.card.form .btn:not(.primary):not(.danger){background:transparent!important;box-shadow:none!important}
+
+  /* Inputs de configurações um pouco menores que formulários de criação */
+  #content>.grid.g2>.card.form input,
+  #content>.grid.g2>.card.form select{min-height:42px!important}
+  #content>.grid.g2>.card.form label{font-size:10.5px!important}
+  #content>.grid.g2>.card.form .appearance-grid{gap:8px!important}
+  #content>.grid.g2>.card.form .auth-note{padding:11px!important;border-radius:12px!important;font-size:10.5px!important;line-height:1.45!important}
+  #content>.grid.g2>.card.form .pill-wrap{gap:5px!important}
+
+  /* Evita branco herdado de componentes de autenticação */
+  body[data-theme="dark"] #content .sync-card,
+  html[data-theme="dark"] #content .sync-card,
+  .dark #content .sync-card{background:var(--card)!important;color:var(--text)!important}
+}
+@media(max-width:430px){
+  #content>.grid.g2>.card.form{padding:13px!important}
+  #content>.grid.g2>.card.form>.btn.primary{min-height:40px!important}
+}
