@@ -1,4 +1,4 @@
-/* V7.3.2 — Mobile polish: visual mais leve, compacto e app-like */
+/* V7.3.3 — Mobile polish: navegação 5 itens e menu Mais */
 @media(max-width:780px){
   :root{--mobile-nav-h:68px}
 
@@ -17,7 +17,6 @@
   .grid.g4 .small{font-size:10.5px!important;margin-top:4px!important}
   .grid.g4 .progress{height:5px!important;margin-top:8px!important}
 
-  /* Mensagem diária mais discreta */
   #content>.card:first-child{padding:13px 15px!important;margin-bottom:10px!important;border-radius:15px!important}
   #content>.card:first-child b{font-size:13.5px!important;line-height:1.35!important}
   #content>.card:first-child .small{font-size:10.5px!important;margin-top:3px!important}
@@ -28,7 +27,6 @@
   .empty{min-height:58px!important;padding:13px 10px!important;font-size:12px!important}
   .grid.g3 .empty{min-height:64px!important}
 
-  /* Itens de tarefa com hierarquia mais limpa */
   .item{padding:12px 0!important;gap:8px!important;flex-wrap:wrap!important}
   .item .grow{min-width:calc(100% - 58px)!important;flex:1!important}
   .item-title{font-size:14px!important;font-weight:700!important;letter-spacing:-.015em}
@@ -40,13 +38,16 @@
   .btn.primary{box-shadow:0 6px 16px color-mix(in srgb,var(--blue) 18%,transparent)!important}
   .mobile-fab{display:none!important}
 
-  /* Navegação inferior mais leve. Mantemos todas as áreas acessíveis nesta rodada. */
-  .side{height:calc(var(--mobile-nav-h) + env(safe-area-inset-bottom))!important;padding:6px 5px calc(6px + env(safe-area-inset-bottom))!important;box-shadow:0 -8px 24px rgba(0,0,0,.10)!important}
-  .nav{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:1px!important;overflow:visible!important;padding:0!important}
-  .nav button{min-width:0!important;min-height:50px!important;padding:6px 1px 4px!important;border-radius:12px!important;font-size:7.5px!important;line-height:1.15!important;letter-spacing:-.025em!important;white-space:normal!important}
+  .side{height:calc(var(--mobile-nav-h) + env(safe-area-inset-bottom))!important;padding:6px 8px calc(6px + env(safe-area-inset-bottom))!important;box-shadow:0 -8px 24px rgba(0,0,0,.10)!important}
+  .nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:4px!important;overflow:visible!important;padding:0!important}
+  .nav button{min-width:0!important;min-height:50px!important;padding:6px 3px 4px!important;border-radius:13px!important;font-size:9.5px!important;line-height:1.18!important;letter-spacing:-.02em!important;white-space:normal!important}
   .nav button.active{background:color-mix(in srgb,var(--blue) 13%,transparent)!important;color:var(--blue)!important;box-shadow:none!important}
   .main{padding-bottom:calc(var(--mobile-nav-h) + 14px)!important}
   .toast{bottom:calc(var(--mobile-nav-h) + 16px + env(safe-area-inset-bottom))!important}
+
+  .mobile-more-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:4px 0 8px}
+  .mobile-more-grid .btn{min-height:84px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:22px!important;border-radius:16px!important}
+  .mobile-more-grid .btn span{font-size:12px;font-weight:700}
 
   .dialog{border-radius:22px 22px 0 0!important}
   .dialog-head{padding:12px 16px!important}
@@ -57,5 +58,5 @@
   #content{width:calc(100% - 20px)!important}
   .grid.g4>.card{min-height:84px!important;padding:11px 12px!important}
   .grid.g4 .metric{font-size:23px!important}
-  .nav button{font-size:7px!important}
+  .nav button{font-size:9px!important}
 }
