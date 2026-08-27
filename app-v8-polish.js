@@ -45,7 +45,11 @@ function polishGoals(){
 function polishAssistant(){
   if(typeof page!=='undefined'&&page!=='assistant')return;
   const card=document.querySelector('.v8-assistant');if(!card)return;
-  if(typeof window.v8RenderSmartChat==='function')window.v8RenderSmartChat();
+  const log=card.querySelector('#assistantLog');
+  if(log&&!log.dataset.smartHydrated&&typeof window.v8RenderSmartChat==='function'){
+    log.dataset.smartHydrated='1';
+    window.v8RenderSmartChat();
+  }
   if(!card.querySelector('.v8-ai-status')){
     const status=document.createElement('div');status.className='v8-ai-status';status.innerHTML='<span></span> Inteligência local ativa';card.prepend(status);
   }
@@ -61,10 +65,7 @@ function polishAssistant(){
   }
 }
 
-function hideLegacyMobileFab(){
-  document.querySelectorAll('.mobile-fab').forEach(el=>{el.style.display='none'});
-}
-
+function hideLegacyMobileFab(){document.querySelectorAll('.mobile-fab').forEach(el=>{el.style.display='none'});}
 function apply(){hideLegacyMobileFab();polishGoals();polishAssistant();}
 const observer=new MutationObserver(()=>requestAnimationFrame(apply));
 observer.observe(document.body,{childList:true,subtree:true});
