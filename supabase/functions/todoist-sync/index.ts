@@ -18,23 +18,39 @@ async function listCompleted(projectId:string,lastSyncedAt?:string|null){const a
 function dateOnly(v:any){const s=String(v||'').slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(s)?s:null}
 function priority(t:any){const p=String(t?.priority||'').toLowerCase();if(p==='urgent'||p==='p1')return 4;if(p==='high'||p==='alta'||p==='p2')return 3;if(p==='normal'||p==='p3')return 2;return 1}
 function taskPayload(t:any,c:any){const payload:any={content:t.name||'Tarefa',description:`Meu Planner Digital\nTYPE:TASK\nID:${t.id}`,project_id:c.project_id,section_id:c.tasks_section_id||undefined,labels:['planner-tarefa'],priority:priority(t)};const due=dateOnly(t.date);if(due)payload.due_date=due;return payload}
+function plannerId(remote:any){const d=String(remote?.description||'');const m=d.match(/(?:^|\n)TYPE:TASK\s*\nID:([^\n]+)/i)||d.match(/(?:^|\n)ID:([^\n]+)/i);return m?String(m[1]).trim():''}
+function mapByPlannerId(items:any[]){const m=new Map<string,any>();for(const item of items){const id=plannerId(item);if(id&&!m.has(id))m.set(id,item)}return m}
 
 async function syncUser(userId:string){
  const c:any=await getConnection(userId);if(!c||!c.enabled){const e:any=new Error('Todoist ainda não está ativado para esta conta.');e.code='not_connected';throw e}
  if(!TODOIST_TOKEN){const e:any=new Error('Integração Todoist ainda precisa da chave de API.');e.code='setup_required';throw e}
  const rows:any=await admin(`planner_state?user_id=eq.${encodeURIComponent(userId)}&select=state,schema_version`),state=rows?.[0]?.state||{};state.tasks=Array.isArray(state.tasks)?state.tasks:[];
- const active=await listActive(c.project_id),activeById=new Map(active.map((x:any)=>[String(x.id),x]));
- const completed=await listCompleted(c.project_id,c.last_synced_at),completedById=new Map(completed.map((x:any)=>[String(x.id),x]));
- let created=0,updated=0,pulled=0,closed=0,reopened=0;const now=new Date().toISOString();
- for(let i=0;i<state.tasks.length;i++){
-   const t=state.tasks[i];if(!t?.id||t.todoistSync===false||!t.todoistTaskId)continue;
-   const rid=String(t.todoistTaskId),remote=activeById.get(rid),done:any=completedById.get(rid);
-   if(done&&!remote){const when=String(done.completed_at||done.updated_at||now);if(t.status!=='done'){state.tasks[i]={...t,status:'done',completedAt:String(when).slice(0,10),updatedAt:when,todoistSyncedAt:when};pulled++}}
-   else if(remote&&t.status==='done'&&t.todoistSyncedAt&&new Date(remote.updated_at||remote.updatedAt||0)>new Date(t.todoistSyncedAt)){const when=String(remote.updated_at||remote.updatedAt||now);state.tasks[i]={...t,status:'todo',completedAt:null,updatedAt:when,todoistSyncedAt:when};pulled++}
- }
+ const active=await listActive(c.project_id),activeById=new Map(active.map((x:any)=>[String(x.id),x])),activeByPlanner=mapByPlannerId(active);
+ const completed=await listCompleted(c.project_id,c.last_synced_at),completedById=new Map(completed.map((x:any)=>[String(x.id),x])),completedByPlanner=mapByPlannerId(completed);
+ let created=0,updated=0,pulled=0,closed=0,reopened=0,adopted=0;const now=new Date().toISOString();
+
  for(let i=0;i<state.tasks.length;i++){
    let t=state.tasks[i];if(!t?.id||t.todoistSync===false)continue;
    let rid=String(t.todoistTaskId||''),remote=rid?activeById.get(rid):null,done=rid?completedById.get(rid):null;
+   if((!rid||(!remote&&!done))&&t.id){
+     const foundActive=activeByPlanner.get(String(t.id)),foundDone=completedByPlanner.get(String(t.id));
+     if(foundActive){rid=String(foundActive.id);remote=foundActive;done=null;adopted++}
+     else if(foundDone){rid=String(foundDone.id);done=foundDone;remote=null;adopted++}
+     if(rid)state.tasks[i]={...t,todoistTaskId:rid,todoistSyncedAt:t.todoistSyncedAt||now};
+   }
+ }
+
+ for(let i=0;i<state.tasks.length;i++){
+   const t=state.tasks[i];if(!t?.id||t.todoistSync===false||!t.todoistTaskId)continue;
+   const rid=String(t.todoistTaskId),remote=activeById.get(rid)||activeByPlanner.get(String(t.id)),done:any=completedById.get(rid)||completedByPlanner.get(String(t.id));
+   if(done&&!remote){const when=String(done.completed_at||done.updated_at||now);if(t.status!=='done'){state.tasks[i]={...t,status:'done',completedAt:String(when).slice(0,10),updatedAt:when,todoistSyncedAt:when};pulled++}}
+   else if(remote&&t.status==='done'&&t.todoistSyncedAt&&new Date(remote.updated_at||remote.updatedAt||0)>new Date(t.todoistSyncedAt)){const when=String(remote.updated_at||remote.updatedAt||now);state.tasks[i]={...t,status:'todo',completedAt:null,updatedAt:when,todoistSyncedAt:when};pulled++}
+ }
+
+ for(let i=0;i<state.tasks.length;i++){
+   let t=state.tasks[i];if(!t?.id||t.todoistSync===false)continue;
+   let rid=String(t.todoistTaskId||''),remote=rid?activeById.get(rid):null,done=rid?completedById.get(rid):null;
+   if(!remote&&!done){const foundActive=activeByPlanner.get(String(t.id)),foundDone=completedByPlanner.get(String(t.id));if(foundActive){rid=String(foundActive.id);remote=foundActive}else if(foundDone){rid=String(foundDone.id);done=foundDone}}
    if(!rid){const saved:any=await todoist('/tasks',{method:'POST',body:JSON.stringify(taskPayload(t,c))});rid=String(saved.id);remote=saved;created++}
    else if(!remote&&!done&&t.status!=='done'){const saved:any=await todoist('/tasks',{method:'POST',body:JSON.stringify(taskPayload(t,c))});rid=String(saved.id);remote=saved;created++}
    else if(remote){await todoist(`/tasks/${encodeURIComponent(rid)}`,{method:'POST',body:JSON.stringify(taskPayload(t,c))});updated++}
@@ -44,7 +60,7 @@ async function syncUser(userId:string){
  }
  await admin('planner_state?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:userId,schema_version:8,state,updated_at:now})});
  await admin(`todoist_connections?user_id=eq.${encodeURIComponent(userId)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({last_synced_at:now,updated_at:now})});
- return {tasks:state.tasks,created,updated,pulled,closed,reopened,lastSyncedAt:now};
+ return {tasks:state.tasks,created,updated,pulled,closed,reopened,adopted,lastSyncedAt:now};
 }
 
 async function cronOk(req:Request){const provided=req.headers.get('x-planner-cron')||'',expected=String(await rpc('get_push_cron_secret')||'');return Boolean(expected&&provided===expected)}
