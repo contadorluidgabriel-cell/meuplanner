@@ -1,0 +1,42 @@
+/* Premium mobile shell corrections — UI only */
+[data-theme="dark"]{
+  --bg:#f7f8fa!important;--surface:#fff!important;--surface-2:#fafbfc!important;--surface-3:#f2f4f7!important;
+  --text:#101828!important;--muted:#667085!important;--line:#e4e7ec!important;--line-strong:#d0d5dd!important;
+  --blue:#2456e8!important;--blue-soft:#eef3ff!important;--green:#079455!important;--green-soft:#ecfdf3!important;
+  --amber:#dc6803!important;--amber-soft:#fffaeb!important;--red:#d92d20!important;--red-soft:#fef3f2!important;
+  --card:#fff!important;
+}
+@media(max-width:780px){
+  html,body,.app,.main{background:#f7f8fa!important;color:#101828!important}
+  .main{margin-left:0!important;width:100%!important;min-width:0!important;padding-bottom:calc(72px + env(safe-area-inset-bottom) + 18px)!important}
+  .top{position:relative!important;top:auto!important;z-index:10!important;min-height:0!important;padding:18px 20px 16px!important;background:#f7f8fa!important;border-bottom:1px solid #e4e7ec!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;color:#101828!important}
+  .top h1{color:#101828!important;font-size:24px!important;font-weight:730!important;line-height:1.12!important;margin:0!important}
+  .top p{color:#667085!important;font-size:12px!important;margin:5px 0 0!important}
+  .top .actions{margin-top:16px!important;gap:8px!important;overflow:visible!important;display:flex!important;flex-wrap:wrap!important}
+  .top .actions .btn{min-height:40px!important;border-radius:10px!important;font-size:12.5px!important;padding:8px 13px!important}
+  #content{width:100%!important;padding:18px 18px 96px!important;margin:0!important}
+  #content>.card:first-child{border-radius:12px!important;padding:15px 16px!important;margin-bottom:14px!important}
+  .card{border-radius:12px!important;background:#fff!important;border-color:#e4e7ec!important}
+  .v8-filterbar,.v8-segment{gap:8px!important;margin-bottom:14px!important}
+  .v8-filterbar button,.v8-segment button{min-height:38px!important;padding:8px 12px!important;border-radius:9px!important;font-size:11px!important}
+  .v8-day-list{padding:0!important}
+  .v8-day-item{border:1px solid #e4e7ec!important;border-radius:12px!important;background:#fff!important;padding:14px 15px!important;margin-bottom:9px!important;grid-template-columns:34px minmax(0,1fr) 34px!important}
+  .v8-day-item:last-child{margin-bottom:0!important}
+  .v8-check,.icon-btn{width:34px!important;height:34px!important;border-radius:9px!important;background:#fff!important}
+  .v8-goal-glance{border-radius:11px!important;padding:12px 14px!important;margin-top:10px!important;background:#f8f9fc!important}
+  .side{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;width:100%!important;max-width:none!important;height:calc(72px + env(safe-area-inset-bottom))!important;padding:7px 10px calc(7px + env(safe-area-inset-bottom))!important;background:rgba(255,255,255,.98)!important;border:0!important;border-top:1px solid #e4e7ec!important;box-shadow:0 -8px 24px rgba(16,24,40,.07)!important;z-index:50!important}
+  .side>.brand,.side>.side-foot{display:none!important}
+  .side .nav{width:100%!important;height:100%!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;padding:0!important;margin:0!important;overflow:visible!important}
+  .side .nav button{width:100%!important;min-width:0!important;min-height:54px!important;padding:7px 3px 5px!important;border-radius:12px!important;background:transparent!important;color:#667085!important;font-size:10.5px!important;font-weight:650!important;line-height:1.18!important;box-shadow:none!important}
+  .side .nav button.active{background:#eef3ff!important;color:#2456e8!important}
+  .side .nav button.active:before{left:4px!important;top:12px!important;bottom:12px!important;width:3px!important;background:#2456e8!important}
+  .dialog{background:#fff!important;color:#101828!important;border-radius:16px!important;width:calc(100vw - 20px)!important;max-height:90dvh!important}
+  .dialog-head,.dialog>#modalBody{background:#fff!important;color:#101828!important}
+  .mobile-fab{display:none!important}
+}
+@media(max-width:420px){
+  .top{padding-left:16px!important;padding-right:16px!important}
+  #content{padding-left:14px!important;padding-right:14px!important}
+  .top h1{font-size:23px!important}
+  .side{padding-left:8px!important;padding-right:8px!important}
+}
