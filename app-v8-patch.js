@@ -2,6 +2,18 @@
 (function(){
 'use strict';
 
+function firstTaskOccurrenceV8(startDate,recurrence,days=[]){
+ const start=String(startDate||today()).slice(0,10),allowed=(days||[]).map(Number).filter(n=>n>=1&&n<=7);
+ if(!recurrence||recurrence==='none'||recurrence==='daily'||recurrence==='monthly')return start;
+ if(recurrence==='weekdays'){
+   let d=start,guard=0;while(guard++<7&&weekDayNum(d)>5)d=addDays(d,1);return d
+ }
+ if((recurrence==='specific'||recurrence==='weekly')&&allowed.length){
+   let d=start,guard=0;while(guard++<8&&!allowed.includes(weekDayNum(d)))d=addDays(d,1);return d
+ }
+ return start
+}
+
 const baseOpenTask=window.openTask, baseSaveTask=window.saveTask;
 if(baseOpenTask&&baseSaveTask){
  window.openTask=function(id){
@@ -9,6 +21,9 @@ if(baseOpenTask&&baseSaveTask){
    setTimeout(()=>{
      const form=document.querySelector('#modal form');if(!form)return;
      const task=id?data.tasks.find(x=>x.id===id):null;
+     const dateInput=form.querySelector('input[name="date"]');
+     if(dateInput&&task?.scheduleStartDate)dateInput.value=task.scheduleStartDate;
+     if(dateInput){const label=dateInput.closest('label');if(label&&label.firstChild)label.firstChild.textContent='Data de início '}
      const prioritySelect=form.querySelector('select[name="priority"]');
      if(prioritySelect){prioritySelect.value='normal';const label=prioritySelect.closest('label');if(label)label.style.display='none'}
      if(!form.querySelector('[name="dayPriority"]')){
@@ -19,16 +34,16 @@ if(baseOpenTask&&baseSaveTask){
    },0)
  };
  window.saveTask=function(e,id){
-   const form=e.target,fd=new FormData(form),goalId=fd.get('goalId')||'',selectedDate=String(fd.get('date')||today()).slice(0,10),dayPriority=fd.get('dayPriority')==='on',beforeIds=new Set(data.tasks.map(t=>t.id));
+   const form=e.target,fd=new FormData(form),goalId=fd.get('goalId')||'',startDate=String(fd.get('date')||today()).slice(0,10),dayPriority=fd.get('dayPriority')==='on',beforeIds=new Set(data.tasks.map(t=>t.id));
    baseSaveTask(e,id);
    let task=id?data.tasks.find(t=>t.id===id):data.tasks.find(t=>!beforeIds.has(t.id));
    if(task){
-     // A data escolhida no formulário é a fonte de verdade para a agenda da tarefa.
-     task.date=selectedDate;
+     const recurrence=task.recurrence||'none',days=task.recurrenceDays||[];
+     task.scheduleStartDate=startDate;
+     task.date=firstTaskOccurrenceV8(startDate,recurrence,days);
      task.goalId=goalId;
      task.dayPriority=dayPriority;
      task.updatedAt=new Date().toISOString();
-     // Se a tarefa deixou de ser de hoje, remove referências antigas do plano diário atual.
      if(task.date!==today()){
        const plan=data.dailyPlans?.[today()];
        if(plan&&Array.isArray(plan.priorities))plan.priorities=plan.priorities.filter(taskId=>taskId!==task.id);
@@ -57,7 +72,6 @@ if(baseOpenHabit&&baseSaveHabit){
  }
 }
 
-// Revisões rápidas conectadas ao planejamento.
 window.openWeeklyReviewV8=function(){
  let wk=weekKey(),p=data.weeklyPlans[wk]||{};
  openModal('🔄 Revisão semanal',`<form class="form" onsubmit="saveWeeklyReviewV8(event)"><div class="auth-note">Resumo curto para aprender com a semana e preparar a próxima.</div><label>O que avançou?<textarea name="wins"></textarea></label><label>O que travou ou foi adiado?<textarea name="blockers"></textarea></label><label>O que quero levar para a próxima semana?<textarea name="next"></textarea></label><button class="btn primary">Salvar revisão</button></form>`)
@@ -68,7 +82,6 @@ window.openMonthlyReviewV8=function(){
 };
 window.saveMonthlyReviewV8=function(e){e.preventDefault();let f=new FormData(e.target);data.reviews.push({id:uid(),type:'monthly',period:`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`,createdAt:new Date().toISOString(),wins:f.get('wins')||'',blockers:f.get('blockers')||'',next:f.get('next')||''});save();closeModal();toast('Revisão mensal salva')};
 
-// Atalhos de revisão dentro do Planejar após cada render.
 const baseRenderPlan=window.renderPlanV8;
 if(baseRenderPlan){
  window.renderPlanV8=function(){baseRenderPlan();setTimeout(()=>{const body=document.getElementById('planBody');if(!body)return;const bar=document.createElement('div');bar.className='v8-review-actions';bar.innerHTML=planView==='week'?`<button class="btn" onclick="openWeeklyReviewV8()">🔄 Revisão semanal</button>`:planView==='month'?`<button class="btn" onclick="openMonthlyReviewV8()">🔄 Revisão mensal</button>`:'';if(bar.innerHTML)body.appendChild(bar)},0)}
