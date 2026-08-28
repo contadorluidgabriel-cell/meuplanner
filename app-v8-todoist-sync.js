@@ -19,13 +19,35 @@ async function requestTodoist(action){
 }
 
 function syncFingerprint(){
- try{return JSON.stringify({tasks:(data?.tasks||[]).map(t=>({id:t.id,name:t.name,date:t.date,status:t.status,priority:t.priority,updatedAt:t.updatedAt,todoistSync:t.todoistSync})),habits:(data?.habits||[]).map(h=>({id:h.id,name:h.name,type:h.type,target:h.target,freqType:h.freqType,specificDays:h.specificDays,weeklyGoal:h.weeklyGoal,paused:h.paused,pauseUntil:h.pauseUntil,archived:h.archived,todoistSync:h.todoistSync})),habitLogs:data?.habitLogs||{}})}catch{return ''}
+ try{return JSON.stringify({tasks:(data?.tasks||[]).map(t=>({id:t.id,name:t.name,date:t.date,scheduleStartDate:t.scheduleStartDate,taskType:t.taskType,recurrence:t.recurrence,recurrenceDays:t.recurrenceDays,status:t.status,priority:t.priority,updatedAt:t.updatedAt,todoistSync:t.todoistSync})),habits:(data?.habits||[]).map(h=>({id:h.id,name:h.name,type:h.type,target:h.target,freqType:h.freqType,specificDays:h.specificDays,weeklyGoal:h.weeklyGoal,paused:h.paused,pauseUntil:h.pauseUntil,archived:h.archived,todoistSync:h.todoistSync})),habitLogs:data?.habitLogs||{}})}catch{return ''}
+}
+
+// Planner é a fonte de verdade para nome, data e recorrência da tarefa.
+// O Todoist só devolve estado de execução e metadados de sincronização.
+// Isso impede um retorno atrasado da API de restaurar uma data antiga no Planner.
+function mergeTodoistTasks(remoteTasks){
+ const localTasks=Array.isArray(data?.tasks)?data.tasks:[],localById=new Map(localTasks.map(t=>[String(t.id),t]));
+ return remoteTasks.map(remote=>{
+   const local=localById.get(String(remote?.id||''));
+   if(!local)return remote;
+   const merged={...local};
+   if(remote.todoistTaskId)merged.todoistTaskId=remote.todoistTaskId;
+   if(remote.todoistSyncedAt)merged.todoistSyncedAt=remote.todoistSyncedAt;
+   const localTime=Date.parse(local.updatedAt||0)||0,remoteTime=Date.parse(remote.updatedAt||0)||0;
+   if(remoteTime>=localTime&&remote.status&&remote.status!==local.status){
+     merged.status=remote.status;
+     merged.completedAt=remote.completedAt??null;
+     merged.actual=remote.actual??local.actual;
+     merged.updatedAt=remote.updatedAt||local.updatedAt;
+   }
+   return merged;
+ });
 }
 
 function applyTodoistDomains(result){
  applyingRemote=true;
  try{
-  if(Array.isArray(result.tasks))data.tasks=result.tasks;
+  if(Array.isArray(result.tasks))data.tasks=mergeTodoistTasks(result.tasks);
   if(Array.isArray(result.habits))data.habits=result.habits;
   if(result.habitLogs&&typeof result.habitLogs==='object')data.habitLogs=result.habitLogs;
   lastFingerprint=syncFingerprint();
@@ -53,7 +75,6 @@ async function pullFreshTodoistState(){
 }
 
 // Aguarda a gravação na nuvem terminar antes de sincronizar com o Todoist.
-// Evita que uma tarefa recém-criada com data futura seja enviada usando o estado anterior.
 function scheduleImmediateSync(){if(!currentUser||!navigator.onLine||!status.connected||!status.configured)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>window.manualTodoistSync({silent:true}),3500)}
 function fmtSyncDate(v){if(!v)return 'Ainda não sincronizado';try{return new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch{return 'Sincronizado'}}
 function injectSettings(replace=false){
