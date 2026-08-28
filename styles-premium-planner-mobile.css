@@ -1,0 +1,39 @@
+/* Premium Planner mobile refinement — visual only */
+@media(max-width:780px){
+  body{overflow-x:hidden}
+  .top{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:start!important;gap:10px 12px!important;padding:16px 16px 14px!important;min-height:auto!important}
+  .top>div:first-child{min-width:0!important}
+  .top h1{font-size:22px!important;line-height:1.1!important;margin:0!important}
+  .top p{font-size:12px!important;line-height:1.35!important;margin-top:5px!important;white-space:normal!important}
+  .top .actions{align-self:center!important;justify-self:end!important;overflow:visible!important;padding:0!important}
+  .top .actions .btn{min-height:38px!important;padding:8px 13px!important;border-radius:10px!important;box-shadow:none!important}
+
+  #content{padding-top:14px!important}
+  .v8-segment{display:flex!important;gap:8px!important;margin:0 0 12px!important;padding:0!important;overflow:visible!important}
+  .v8-segment button{min-height:38px!important;padding:8px 14px!important;border-radius:10px!important;font-size:12px!important;font-weight:650!important;flex:0 0 auto!important}
+
+  .v8-plan-card{padding:16px!important;gap:14px!important;border-radius:14px!important;overflow:hidden!important}
+  .v8-plan-card>strong{font-size:17px!important;line-height:1.25!important;display:block!important;margin-bottom:2px!important}
+  .v8-plan-card label{font-size:12px!important;font-weight:650!important;gap:6px!important;color:#475467!important}
+  .v8-plan-card textarea{min-height:92px!important;border-radius:10px!important;padding:11px 12px!important;line-height:1.45!important}
+  .v8-plan-card .section.compact{margin:6px 0 0!important}
+  .v8-plan-card .section.compact h2{font-size:16px!important}
+
+  .v8-week-grid{display:grid!important;grid-template-columns:repeat(7,74px)!important;gap:7px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:2px 0 8px!important;margin:0!important;scroll-snap-type:x proximity!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-inline:contain!important}
+  .v8-week-grid::-webkit-scrollbar{height:5px!important}
+  .v8-week-day{min-width:74px!important;width:74px!important;min-height:118px!important;padding:10px 6px!important;border-radius:10px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;scroll-snap-align:start!important;overflow:hidden!important;background:#fff!important}
+  .v8-week-day b{font-size:12px!important;line-height:1.1!important;white-space:nowrap!important}
+  .v8-week-day span{font-size:12px!important;line-height:1.1!important;margin:6px 0 8px!important}
+  .v8-week-day small{font-size:9.5px!important;line-height:1.35!important;text-align:center!important;white-space:normal!important;word-break:normal!important;overflow-wrap:normal!important;color:#667085!important}
+  .v8-week-day.today{background:#f7f9ff!important;border-color:#2456e8!important;box-shadow:inset 0 0 0 1px rgba(36,86,232,.08)!important}
+
+  .v8-ai-inline{font-size:11px!important;line-height:1.4!important;padding:11px 12px!important;margin-top:2px!important}
+}
+@media(max-width:420px){
+  .top{padding-left:14px!important;padding-right:14px!important}
+  .top h1{font-size:21px!important}
+  .top .actions .btn{padding-left:12px!important;padding-right:12px!important}
+  .v8-plan-card{padding:14px!important}
+  .v8-week-grid{grid-template-columns:repeat(7,70px)!important}
+  .v8-week-day{width:70px!important;min-width:70px!important}
+}
