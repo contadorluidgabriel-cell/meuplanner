@@ -24,12 +24,17 @@ function syncFingerprint(){
 
 function applyTodoistDomains(result){
  applyingRemote=true;
- if(Array.isArray(result.tasks))data.tasks=result.tasks;
- if(Array.isArray(result.habits))data.habits=result.habits;
- if(result.habitLogs&&typeof result.habitLogs==='object')data.habitLogs=result.habitLogs;
- lastFingerprint=syncFingerprint();
- const serialized=JSON.stringify(data);lastSavedState=serialized;storageSet(KEY,serialized);if(currentUser)storageSet(userCacheKey(currentUser.id),serialized);
- render();applyingRemote=false;
+ try{
+  if(Array.isArray(result.tasks))data.tasks=result.tasks;
+  if(Array.isArray(result.habits))data.habits=result.habits;
+  if(result.habitLogs&&typeof result.habitLogs==='object')data.habitLogs=result.habitLogs;
+  lastFingerprint=syncFingerprint();
+  const serialized=JSON.stringify(data);
+  lastSavedState=serialized;
+  storageSet(KEY,serialized);
+  if(currentUser)storageSet(userCacheKey(currentUser.id),serialized);
+  if(typeof render==='function')render();
+ }finally{applyingRemote=false}
 }
 
 async function loadStatus(){if(!currentUser)return status;try{status=await requestTodoist('status')}catch(error){console.warn('Todoist status:',error);status={connected:false,configured:false,lastSyncedAt:null,error:error.message}}injectSettings();return status}
@@ -42,18 +47,23 @@ window.manualTodoistSync=async function(options={}){
  finally{syncing=false}
 };
 
+async function pullFreshTodoistState(){
+ if(!currentUser||!navigator.onLine||!status.connected||!status.configured)return false;
+ return window.manualTodoistSync({silent:true});
+}
+
 function scheduleImmediateSync(){if(!currentUser||!navigator.onLine||!status.connected||!status.configured)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>window.manualTodoistSync({silent:true}),1200)}
 function fmtSyncDate(v){if(!v)return 'Ainda não sincronizado';try{return new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch{return 'Sincronizado'}}
 function injectSettings(replace=false){
  if(typeof page!=='undefined'&&page!=='settings')return;const grid=document.querySelector('#content .grid.g2');if(!grid)return;let card=document.getElementById('v8-todoist-card');if(card&&replace)card.remove();else if(card)return;card=document.createElement('div');card.className='card form';card.id='v8-todoist-card';const ready=Boolean(status.connected&&status.configured);
- card.innerHTML=`<strong>☑️ Todoist</strong>${ready?`<div class="sync-meta"><span><strong>Ativo</strong></span><span class="small muted">Tarefas + hábitos do Planner ↔ Todoist</span></div><div class="small muted">Hábitos aparecem como uma ocorrência por dia na seção Hábitos.</div><div class="small muted">Automático a cada 1 minuto + imediato ao alterar no Planner.</div><div class="small muted">Última sincronização: ${fmtSyncDate(status.lastSyncedAt)}</div><button class="btn primary" onclick="manualTodoistSync()">Sincronizar agora</button>`:status.connected?'<div class="small muted">Estrutura pronta. Falta somente liberar a chave da API do Todoist no servidor.</div><button class="btn" onclick="manualTodoistSync()">Testar configuração</button>':'<div class="small muted">Integração preparada para usar o Todoist como execução rápida no celular.</div>'}</div>`;grid.appendChild(card)
+ card.innerHTML=`<strong>☑️ Todoist</strong>${ready?`<div class="sync-meta"><span><strong>Ativo</strong></span><span class="small muted">Tarefas + hábitos do Planner ↔ Todoist</span></div><div class="small muted">Hábitos aparecem como uma ocorrência por dia na seção Hábitos.</div><div class="small muted">Automático a cada 1 minuto + atualização ao voltar para o Planner.</div><div class="small muted">Última sincronização: ${fmtSyncDate(status.lastSyncedAt)}</div><button class="btn primary" onclick="manualTodoistSync()">Sincronizar agora</button>`:status.connected?'<div class="small muted">Estrutura pronta. Falta somente liberar a chave da API do Todoist no servidor.</div><button class="btn" onclick="manualTodoistSync()">Testar configuração</button>':'<div class="small muted">Integração preparada para usar o Todoist como execução rápida no celular.</div>'}</div>`;grid.appendChild(card)
 }
 
 const baseRenderSettings=window.renderSettings;if(typeof baseRenderSettings==='function')window.renderSettings=function(){baseRenderSettings();injectSettings(true);loadStatus()};
 const baseSave=window.save;if(typeof baseSave==='function')window.save=function(...args){const result=baseSave.apply(this,args),fp=syncFingerprint();if(fp!==lastFingerprint){lastFingerprint=fp;scheduleImmediateSync()}return result};
-function startForegroundSync(){clearInterval(interval);interval=setInterval(()=>{if(currentUser&&navigator.onLine&&status.connected&&status.configured)window.manualTodoistSync({silent:true})},60*1000)}
-function syncOnReturn(){if(document.visibilityState==='visible'&&currentUser&&navigator.onLine&&status.connected&&status.configured)window.manualTodoistSync({silent:true})}
-document.addEventListener('visibilitychange',syncOnReturn);window.addEventListener('focus',syncOnReturn);
-window.addEventListener('load',()=>{setTimeout(async()=>{await loadStatus();lastFingerprint=syncFingerprint();if(status.connected&&status.configured)window.manualTodoistSync({silent:true})},800);startForegroundSync()});
-setTimeout(()=>{if(currentUser)loadStatus()},1200);
+function startForegroundSync(){clearInterval(interval);interval=setInterval(()=>{pullFreshTodoistState()},30*1000)}
+function syncOnReturn(){if(document.visibilityState==='visible')setTimeout(()=>pullFreshTodoistState(),250)}
+document.addEventListener('visibilitychange',syncOnReturn);window.addEventListener('focus',()=>setTimeout(()=>pullFreshTodoistState(),250));window.addEventListener('pageshow',()=>setTimeout(()=>pullFreshTodoistState(),250));
+window.addEventListener('load',()=>{setTimeout(async()=>{await loadStatus();lastFingerprint=syncFingerprint();if(status.connected&&status.configured)await pullFreshTodoistState()},800);startForegroundSync()});
+setTimeout(async()=>{if(currentUser){await loadStatus();if(status.connected&&status.configured)pullFreshTodoistState()}},1200);
 })();
