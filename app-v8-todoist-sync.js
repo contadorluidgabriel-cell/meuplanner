@@ -4,6 +4,9 @@
 const ENDPOINT='/functions/v1/todoist-sync';
 let syncing=false;
 let status={connected:false,configured:false,lastSyncedAt:null};
+let interval=null;
+let taskSyncTimer=null;
+let lastTaskFingerprint='';
 
 async function requestTodoist(action){
  const session=await ensureSession();
@@ -19,10 +22,15 @@ async function requestTodoist(action){
  return result;
 }
 
+function taskFingerprint(){
+ try{return JSON.stringify((data?.tasks||[]).map(t=>({id:t.id,name:t.name,date:t.date,status:t.status,priority:t.priority,updatedAt:t.updatedAt,todoistSync:t.todoistSync})))}catch{return ''}
+}
+
 function applyTasksOnly(tasks){
  if(!Array.isArray(tasks))return;
  applyingRemote=true;
  data.tasks=tasks;
+ lastTaskFingerprint=taskFingerprint();
  const serialized=JSON.stringify(data);
  lastSavedState=serialized;
  storageSet(KEY,serialized);
@@ -61,6 +69,12 @@ window.manualTodoistSync=async function(options={}){
  }finally{syncing=false}
 };
 
+function scheduleImmediateTaskSync(){
+ if(!currentUser||!navigator.onLine||!status.connected||!status.configured)return;
+ clearTimeout(taskSyncTimer);
+ taskSyncTimer=setTimeout(()=>window.manualTodoistSync({silent:true}),1200);
+}
+
 function fmtSyncDate(v){
  if(!v)return 'Ainda não sincronizado';
  try{return new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch{return 'Sincronizado'}
@@ -74,7 +88,7 @@ function injectSettings(replace=false){
  const ready=Boolean(status.connected&&status.configured);
  card.innerHTML=`<strong>☑️ Todoist</strong>${
   ready
-   ?`<div class="sync-meta"><span><strong>Ativo</strong></span><span class="small muted">Tarefas do Planner ↔ Todoist</span></div><div class="small muted">Última sincronização: ${fmtSyncDate(status.lastSyncedAt)}</div><button class="btn primary" onclick="manualTodoistSync()">Sincronizar agora</button>`
+   ?`<div class="sync-meta"><span><strong>Ativo</strong></span><span class="small muted">Tarefas do Planner ↔ Todoist</span></div><div class="small muted">Automático: a cada 1 minuto + imediato ao alterar tarefa no Planner.</div><div class="small muted">Última sincronização: ${fmtSyncDate(status.lastSyncedAt)}</div><button class="btn primary" onclick="manualTodoistSync()">Sincronizar agora</button>`
    :status.connected
     ?'<div class="small muted">Estrutura pronta. Falta somente liberar a chave da API do Todoist no servidor.</div><button class="btn" onclick="manualTodoistSync()">Testar configuração</button>'
     :'<div class="small muted">Integração preparada para usar o Todoist como execução rápida das tarefas no celular.</div>'
@@ -87,11 +101,24 @@ if(typeof baseRenderSettings==='function'){
  window.renderSettings=function(){baseRenderSettings();injectSettings(true);loadStatus()};
 }
 
-let interval=null;
-function startForegroundFallback(){
- clearInterval(interval);
- interval=setInterval(()=>{if(currentUser&&navigator.onLine&&status.connected&&status.configured)window.manualTodoistSync({silent:true})},15*60*1000);
+const baseSave=window.save;
+if(typeof baseSave==='function'){
+ window.save=function(...args){
+  const result=baseSave.apply(this,args);
+  const fp=taskFingerprint();
+  if(fp!==lastTaskFingerprint){lastTaskFingerprint=fp;scheduleImmediateTaskSync()}
+  return result;
+ };
 }
-window.addEventListener('load',()=>{setTimeout(loadStatus,800);startForegroundFallback()});
+
+function startForegroundSync(){
+ clearInterval(interval);
+ interval=setInterval(()=>{if(currentUser&&navigator.onLine&&status.connected&&status.configured)window.manualTodoistSync({silent:true})},60*1000);
+}
+function syncOnReturn(){if(document.visibilityState==='visible'&&currentUser&&navigator.onLine&&status.connected&&status.configured)window.manualTodoistSync({silent:true})}
+
+document.addEventListener('visibilitychange',syncOnReturn);
+window.addEventListener('focus',syncOnReturn);
+window.addEventListener('load',()=>{setTimeout(async()=>{await loadStatus();lastTaskFingerprint=taskFingerprint();if(status.connected&&status.configured)window.manualTodoistSync({silent:true})},800);startForegroundSync()});
 setTimeout(()=>{if(currentUser)loadStatus()},1200);
 })();
