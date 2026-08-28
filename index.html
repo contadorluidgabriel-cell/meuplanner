@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827">
+<meta name="theme-color" content="#f7f8fa">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,18 +17,19 @@
 <link rel="stylesheet" href="/styles-mobile-inbox-fix.css">
 <link rel="stylesheet" href="/styles-mobile-settings-fix.css">
 <link rel="stylesheet" href="/styles-v8.css">
+<link rel="stylesheet" href="/styles-premium.css?v=1">
 </head>
 <body>
 <div class="app">
 <aside class="side">
   <div class="brand">Meu <span>Planner Digital</span></div>
   <nav class="nav" id="nav"></nav>
-  <div class="side-foot"><div class="account-panel"><div class="sync-pill"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Somente neste dispositivo</span></div><div class="account-email" id="accountEmail">Modo visitante</div><button class="btn" id="accountButton" style="width:100%;background:#111827;color:white;border-color:#374151" onclick="openAccount()">☁ Entrar para sincronizar</button></div></div>
+  <div class="side-foot"><div class="account-panel"><div class="sync-pill"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Somente neste dispositivo</span></div><div class="account-email" id="accountEmail">Modo visitante</div><button class="btn" id="accountButton" style="width:100%" onclick="openAccount()">☁ Entrar para sincronizar</button></div></div>
 </aside>
 <main class="main"><div class="top"><div><h1 id="pageTitle">☀️ Hoje</h1><p id="pageSub"></p></div><div class="actions" id="topActions"></div></div><div id="content"></div></main>
 </div>
 <button class="mobile-fab" type="button" aria-label="Captura rápida" onclick="openQuick()"><span>＋</span></button>
-<div class="modal" id="modal"><div class="dialog"><div class="dialog-head"><h2 id="modalTitle"></h2><button class="x" onclick="closeModal()">✕</button></div><div id="modalBody"></div></div></div>
+<div class="modal" id="modal"><div class="dialog"><div class="dialog-head"><h2 id="modalTitle"></h2><button class="x" onclick="closeModal()" aria-label="Fechar">✕</button></div><div id="modalBody"></div></div></div>
 <div class="toast" id="toast"></div>
 <script src="/app-01.js"></script><script src="/app-02.js"></script><script src="/app-03.js"></script><script src="/app-04.js"></script><script src="/app-05.js"></script><script src="/app-06.js"></script><script src="/app-07.js"></script><script src="/app-08.js"></script><script src="/app-09.js"></script><script src="/app-10.js"></script><script src="/app-11.js"></script><script src="/app-12.js"></script><script src="/app-v8.js"></script><script src="/app-v8-patch.js"></script><script src="/app-v8-intelligence.js"></script><script src="/app-v8-polish.js"></script><script src="/app-v8-commitments.js"></script><script src="/app-v8-habits-fix.js"></script><script src="/app-v8-calendar-sync.js"></script><script src="/app-v8-tasks-sync.js"></script><script src="/app-v8-habit-form-polish.js"></script><script src="/app-v8-todoist-sync.js"></script>
 </body></html>
