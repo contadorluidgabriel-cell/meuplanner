@@ -4,6 +4,7 @@ const SERVICE_KEY=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
 const TODOIST_TOKEN=Deno.env.get('TODOIST_API_TOKEN')||'';
 const API='https://api.todoist.com/api/v1';
 const APP_URL='https://meuplannerdigital.vercel.app/';
+const TZ='America/Sao_Paulo';
 
 function cors(req:Request){const o=req.headers.get('origin')||'',app=new URL(APP_URL).origin,allowed=o===app||/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);return {'Access-Control-Allow-Origin':allowed?o:app,'Access-Control-Allow-Headers':'authorization, apikey, content-type, x-planner-cron','Access-Control-Allow-Methods':'POST, OPTIONS','Vary':'Origin'}}
 function json(req:Request,body:unknown,status=200){return new Response(JSON.stringify(body),{status,headers:{...cors(req),'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}})}
@@ -16,64 +17,58 @@ async function getConnection(userId:string){const rows:any=await admin(`todoist_
 async function listActive(projectId:string){const all:any[]=[];let cursor='';for(;;){const q=new URLSearchParams({project_id:projectId,limit:'200'});if(cursor)q.set('cursor',cursor);const r:any=await todoist(`/tasks?${q}`);all.push(...(r?.results||[]));cursor=r?.next_cursor||'';if(!cursor)break}return all}
 async function listCompleted(projectId:string,lastSyncedAt?:string|null){const all:any[]=[];let cursor='';const until=new Date().toISOString();const base=lastSyncedAt?new Date(lastSyncedAt).getTime()-24*60*60*1000:Date.now()-30*24*60*60*1000;const since=new Date(base).toISOString();for(;;){const q=new URLSearchParams({since,until,project_id:projectId,limit:'200'});if(cursor)q.set('cursor',cursor);const r:any=await todoist(`/tasks/completed/by_completion_date?${q}`);all.push(...(r?.items||r?.results||[]));cursor=r?.next_cursor||'';if(!cursor)break}return all}
 function dateOnly(v:any){const s=String(v||'').slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(s)?s:null}
+function localDate(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=(t:string)=>parts.find(p=>p.type===t)?.value||'';return `${g('year')}-${g('month')}-${g('day')}`}
+function dateObj(s:string){return new Date(`${s}T12:00:00Z`)}
+function addDays(s:string,n:number){const d=dateObj(s);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
+function weekDayNum(s:string){const n=dateObj(s).getUTCDay();return n===0?7:n}
+function monday(s:string){return addDays(s,1-weekDayNum(s))}
 function priority(t:any){const p=String(t?.priority||'').toLowerCase();if(p==='urgent'||p==='p1')return 4;if(p==='high'||p==='alta'||p==='p2')return 3;if(p==='normal'||p==='p3')return 2;return 1}
 function taskPayload(t:any,c:any){const payload:any={content:t.name||'Tarefa',description:`Meu Planner Digital\nTYPE:TASK\nID:${t.id}`,project_id:c.project_id,section_id:c.tasks_section_id||undefined,labels:['planner-tarefa'],priority:priority(t)};const due=dateOnly(t.date);if(due)payload.due_date=due;return payload}
-function plannerId(remote:any){const d=String(remote?.description||'');const m=d.match(/(?:^|\n)TYPE:TASK\s*\nID:([^\n]+)/i)||d.match(/(?:^|\n)ID:([^\n]+)/i);return m?String(m[1]).trim():''}
-function mapByPlannerId(items:any[]){const m=new Map<string,any>();for(const item of items){const id=plannerId(item);if(id&&!m.has(id))m.set(id,item)}return m}
+function taskPlannerId(remote:any){const d=String(remote?.description||'');const m=d.match(/(?:^|\n)TYPE:TASK\s*\nID:([^\n]+)/i)||d.match(/(?:^|\n)ID:([^\n]+)/i);return m?String(m[1]).trim():''}
+function mapTasksByPlannerId(items:any[]){const m=new Map<string,any>();for(const item of items){const id=taskPlannerId(item);if(id&&!m.has(id))m.set(id,item)}return m}
+function habitMarker(remote:any){const d=String(remote?.description||'');const h=d.match(/(?:^|\n)HABIT_ID:([^\n]+)/i),dt=d.match(/(?:^|\n)DATE:(\d{4}-\d{2}-\d{2})/i);return h&&dt?`${String(h[1]).trim()}_${dt[1]}`:''}
+function mapHabitsByMarker(items:any[]){const m=new Map<string,any>();for(const item of items){const k=habitMarker(item);if(k&&!m.has(k))m.set(k,item)}return m}
+function configForDate(h:any,date:string){const hist=Array.isArray(h.configHistory)?[...h.configHistory].sort((a,b)=>String(a.from||'').localeCompare(String(b.from||''))):[];let cfg:any=h;for(const x of hist){if(String(x.from||'')<=date)cfg={...h,...x};else break}return cfg}
+function habitEntry(state:any,id:string,date:string){const raw=state.habitLogs?.[`${id}_${date}`];if(raw==null)return {value:0,note:'',items:[]};if(typeof raw==='number')return {value:Number(raw)||0,note:'',items:[]};return {value:Number(raw.value)||0,note:String(raw.note||''),items:Array.isArray(raw.items)?raw.items:[]}}
+function habitComplete(state:any,h:any,date:string){const cfg=configForDate(h,date);return habitEntry(state,h.id,date).value>=Math.max(1,Number(cfg.target)||1)}
+function pausedOn(h:any,date:string){if((h.pauseHistory||[]).some((p:any)=>String(p.from||'')<=date&&(!p.to||date<=String(p.to))))return true;if(h.paused){if(!h.pauseUntil)return date>=localDate();return date>=localDate()&&date<=String(h.pauseUntil)}return false}
+function weeklyCount(state:any,h:any,date:string){const start=monday(date);let n=0;for(let i=0;i<7;i++){const d=addDays(start,i);if(d>date)break;if(habitComplete(state,h,d))n++}return n}
+function habitScheduled(state:any,h:any,date:string){if(!h?.id||h.archived||String(h.createdAt||date)>date||pausedOn(h,date))return false;const cfg=configForDate(h,date),wd=weekDayNum(date);if(cfg.freqType==='daily')return true;if(cfg.freqType==='weekdays')return wd<=5;if(cfg.freqType==='specific')return (cfg.specificDays||[]).map(Number).includes(wd);if(cfg.freqType==='weekly')return weeklyCount(state,h,date)<Math.max(1,Number(cfg.weeklyGoal)||1)||habitComplete(state,h,date);return true}
+function habitPayload(h:any,date:string,c:any){return {content:h.name||'Hábito',description:`Meu Planner Digital\nTYPE:HABIT\nHABIT_ID:${h.id}\nDATE:${date}`,project_id:c.project_id,section_id:c.habits_section_id||undefined,labels:['planner-habito'],priority:2,due_date:date}}
+function completeHabitLog(state:any,h:any,date:string){state.habitLogs=state.habitLogs&&typeof state.habitLogs==='object'?state.habitLogs:{};const key=`${h.id}_${date}`,old=habitEntry(state,h.id,date),cfg=configForDate(h,date),target=Math.max(1,Number(cfg.target)||1),items=cfg.type==='checklist'?(cfg.checklistItems||h.checklistItems||[]).map((_:any,i:number)=>i):old.items;state.habitLogs[key]={value:target,note:old.note||'',items};}
 
 async function syncUser(userId:string){
  const c:any=await getConnection(userId);if(!c||!c.enabled){const e:any=new Error('Todoist ainda não está ativado para esta conta.');e.code='not_connected';throw e}
  if(!TODOIST_TOKEN){const e:any=new Error('Integração Todoist ainda precisa da chave de API.');e.code='setup_required';throw e}
- const rows:any=await admin(`planner_state?user_id=eq.${encodeURIComponent(userId)}&select=state,schema_version`),state=rows?.[0]?.state||{};state.tasks=Array.isArray(state.tasks)?state.tasks:[];
- const active=await listActive(c.project_id),activeById=new Map(active.map((x:any)=>[String(x.id),x])),activeByPlanner=mapByPlannerId(active);
- const completed=await listCompleted(c.project_id,c.last_synced_at),completedById=new Map(completed.map((x:any)=>[String(x.id),x])),completedByPlanner=mapByPlannerId(completed);
- let created=0,updated=0,pulled=0,closed=0,reopened=0,adopted=0;const now=new Date().toISOString();
+ const rows:any=await admin(`planner_state?user_id=eq.${encodeURIComponent(userId)}&select=state,schema_version`),state=rows?.[0]?.state||{};
+ state.tasks=Array.isArray(state.tasks)?state.tasks:[];state.habits=Array.isArray(state.habits)?state.habits:[];state.habitLogs=state.habitLogs&&typeof state.habitLogs==='object'?state.habitLogs:{};
+ const active=await listActive(c.project_id),activeById=new Map(active.map((x:any)=>[String(x.id),x])),activeByPlanner=mapTasksByPlannerId(active),activeHabits=mapHabitsByMarker(active);
+ const completed=await listCompleted(c.project_id,c.last_synced_at),completedById=new Map(completed.map((x:any)=>[String(x.id),x])),completedByPlanner=mapTasksByPlannerId(completed),completedHabits=mapHabitsByMarker(completed);
+ let created=0,updated=0,pulled=0,closed=0,reopened=0,adopted=0,habitCreated=0,habitUpdated=0,habitPulled=0,habitClosed=0;const now=new Date().toISOString();
 
- for(let i=0;i<state.tasks.length;i++){
-   let t=state.tasks[i];if(!t?.id||t.todoistSync===false)continue;
-   let rid=String(t.todoistTaskId||''),remote=rid?activeById.get(rid):null,done=rid?completedById.get(rid):null;
-   if((!rid||(!remote&&!done))&&t.id){
-     const foundActive=activeByPlanner.get(String(t.id)),foundDone=completedByPlanner.get(String(t.id));
-     if(foundActive){rid=String(foundActive.id);remote=foundActive;done=null;adopted++}
-     else if(foundDone){rid=String(foundDone.id);done=foundDone;remote=null;adopted++}
-     if(rid)state.tasks[i]={...t,todoistTaskId:rid,todoistSyncedAt:t.todoistSyncedAt||now};
-   }
- }
+ for(let i=0;i<state.tasks.length;i++){let t=state.tasks[i];if(!t?.id||t.todoistSync===false)continue;let rid=String(t.todoistTaskId||''),remote=rid?activeById.get(rid):null,done=rid?completedById.get(rid):null;if((!rid||(!remote&&!done))&&t.id){const foundActive=activeByPlanner.get(String(t.id)),foundDone=completedByPlanner.get(String(t.id));if(foundActive){rid=String(foundActive.id);remote=foundActive;done=null;adopted++}else if(foundDone){rid=String(foundDone.id);done=foundDone;remote=null;adopted++}if(rid)state.tasks[i]={...t,todoistTaskId:rid,todoistSyncedAt:t.todoistSyncedAt||now}}}
+ for(let i=0;i<state.tasks.length;i++){const t=state.tasks[i];if(!t?.id||t.todoistSync===false||!t.todoistTaskId)continue;const rid=String(t.todoistTaskId),remote=activeById.get(rid)||activeByPlanner.get(String(t.id)),done:any=completedById.get(rid)||completedByPlanner.get(String(t.id));if(done&&!remote){const when=String(done.completed_at||done.updated_at||now);if(t.status!=='done'){state.tasks[i]={...t,status:'done',completedAt:String(when).slice(0,10),updatedAt:when,todoistSyncedAt:when};pulled++}}else if(remote&&t.status==='done'&&t.todoistSyncedAt&&new Date(remote.updated_at||remote.updatedAt||0)>new Date(t.todoistSyncedAt)){const when=String(remote.updated_at||remote.updatedAt||now);state.tasks[i]={...t,status:'todo',completedAt:null,updatedAt:when,todoistSyncedAt:when};pulled++}}
+ for(let i=0;i<state.tasks.length;i++){let t=state.tasks[i];if(!t?.id||t.todoistSync===false)continue;let rid=String(t.todoistTaskId||''),remote=rid?activeById.get(rid):null,done=rid?completedById.get(rid):null;if(!remote&&!done){const foundActive=activeByPlanner.get(String(t.id)),foundDone=completedByPlanner.get(String(t.id));if(foundActive){rid=String(foundActive.id);remote=foundActive}else if(foundDone){rid=String(foundDone.id);done=foundDone}}if(!rid){const saved:any=await todoist('/tasks',{method:'POST',body:JSON.stringify(taskPayload(t,c))});rid=String(saved.id);remote=saved;created++}else if(!remote&&!done&&t.status!=='done'){const saved:any=await todoist('/tasks',{method:'POST',body:JSON.stringify(taskPayload(t,c))});rid=String(saved.id);remote=saved;created++}else if(remote){await todoist(`/tasks/${encodeURIComponent(rid)}`,{method:'POST',body:JSON.stringify(taskPayload(t,c))});updated++}if(t.status==='done'&&rid&&remote){await todoist(`/tasks/${encodeURIComponent(rid)}/close`,{method:'POST'});closed++;remote=null}else if(t.status!=='done'&&rid&&!remote&&done){await todoist(`/tasks/${encodeURIComponent(rid)}/reopen`,{method:'POST'});reopened++}state.tasks[i]={...state.tasks[i],todoistTaskId:rid,todoistSyncedAt:now}}
 
- for(let i=0;i<state.tasks.length;i++){
-   const t=state.tasks[i];if(!t?.id||t.todoistSync===false||!t.todoistTaskId)continue;
-   const rid=String(t.todoistTaskId),remote=activeById.get(rid)||activeByPlanner.get(String(t.id)),done:any=completedById.get(rid)||completedByPlanner.get(String(t.id));
-   if(done&&!remote){const when=String(done.completed_at||done.updated_at||now);if(t.status!=='done'){state.tasks[i]={...t,status:'done',completedAt:String(when).slice(0,10),updatedAt:when,todoistSyncedAt:when};pulled++}}
-   else if(remote&&t.status==='done'&&t.todoistSyncedAt&&new Date(remote.updated_at||remote.updatedAt||0)>new Date(t.todoistSyncedAt)){const when=String(remote.updated_at||remote.updatedAt||now);state.tasks[i]={...t,status:'todo',completedAt:null,updatedAt:when,todoistSyncedAt:when};pulled++}
- }
-
- for(let i=0;i<state.tasks.length;i++){
-   let t=state.tasks[i];if(!t?.id||t.todoistSync===false)continue;
-   let rid=String(t.todoistTaskId||''),remote=rid?activeById.get(rid):null,done=rid?completedById.get(rid):null;
-   if(!remote&&!done){const foundActive=activeByPlanner.get(String(t.id)),foundDone=completedByPlanner.get(String(t.id));if(foundActive){rid=String(foundActive.id);remote=foundActive}else if(foundDone){rid=String(foundDone.id);done=foundDone}}
-   if(!rid){const saved:any=await todoist('/tasks',{method:'POST',body:JSON.stringify(taskPayload(t,c))});rid=String(saved.id);remote=saved;created++}
-   else if(!remote&&!done&&t.status!=='done'){const saved:any=await todoist('/tasks',{method:'POST',body:JSON.stringify(taskPayload(t,c))});rid=String(saved.id);remote=saved;created++}
-   else if(remote){await todoist(`/tasks/${encodeURIComponent(rid)}`,{method:'POST',body:JSON.stringify(taskPayload(t,c))});updated++}
-   if(t.status==='done'&&rid&&remote){await todoist(`/tasks/${encodeURIComponent(rid)}/close`,{method:'POST'});closed++;remote=null}
-   else if(t.status!=='done'&&rid&&!remote&&done){await todoist(`/tasks/${encodeURIComponent(rid)}/reopen`,{method:'POST'});reopened++}
-   state.tasks[i]={...state.tasks[i],todoistTaskId:rid,todoistSyncedAt:now};
+ const today=localDate();
+ for(let i=0;i<state.habits.length;i++){
+   let h=state.habits[i];if(!h?.id||h.todoistSync===false)continue;const marker=`${h.id}_${today}`,scheduled=habitScheduled(state,h,today);if(!scheduled)continue;
+   h.todoistOccurrences=h.todoistOccurrences&&typeof h.todoistOccurrences==='object'?h.todoistOccurrences:{};
+   let rid=String(h.todoistOccurrences?.[today]?.id||''),remote=rid?activeById.get(rid):null,done=rid?completedById.get(rid):null;
+   if(!remote&&!done){remote=activeHabits.get(marker)||null;done=completedHabits.get(marker)||null;if(remote||done){rid=String((remote||done).id);adopted++}}
+   if(done&&!remote&&!habitComplete(state,h,today)){completeHabitLog(state,h,today);habitPulled++}
+   const completedLocally=habitComplete(state,h,today);
+   if(!rid){const saved:any=await todoist('/tasks',{method:'POST',body:JSON.stringify(habitPayload(h,today,c))});rid=String(saved.id);remote=saved;habitCreated++}
+   else if(remote){await todoist(`/tasks/${encodeURIComponent(rid)}`,{method:'POST',body:JSON.stringify(habitPayload(h,today,c))});habitUpdated++}
+   if(completedLocally&&remote){await todoist(`/tasks/${encodeURIComponent(rid)}/close`,{method:'POST'});habitClosed++;remote=null}
+   h.todoistOccurrences[today]={id:rid,syncedAt:now};state.habits[i]=h;
  }
  await admin('planner_state?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:userId,schema_version:8,state,updated_at:now})});
  await admin(`todoist_connections?user_id=eq.${encodeURIComponent(userId)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({last_synced_at:now,updated_at:now})});
- return {tasks:state.tasks,created,updated,pulled,closed,reopened,adopted,lastSyncedAt:now};
+ return {tasks:state.tasks,habits:state.habits,habitLogs:state.habitLogs,created,updated,pulled,closed,reopened,adopted,habitCreated,habitUpdated,habitPulled,habitClosed,lastSyncedAt:now};
 }
 
 async function cronOk(req:Request){const provided=req.headers.get('x-planner-cron')||'',expected=String(await rpc('get_push_cron_secret')||'');return Boolean(expected&&provided===expected)}
 async function syncAll(req:Request){if(!await cronOk(req))return json(req,{error:'Não autorizado'},401);const rows:any=await admin('todoist_connections?enabled=eq.true&select=user_id');let synced=0,failed=0;const errors:any[]=[];for(const r of Array.isArray(rows)?rows:[]){try{await syncUser(r.user_id);synced++}catch(e){failed++;errors.push({userId:r.user_id,error:e instanceof Error?e.message:'Falha'})}}return json(req,{ok:true,synced,failed,errors:errors.slice(0,10)})}
 
-Deno.serve(async(req:Request)=>{
- if(req.method==='OPTIONS')return new Response('ok',{headers:cors(req)});if(req.method!=='POST')return json(req,{error:'Método não permitido'},405);let body:any={};try{body=await req.json()}catch{}
- try{
-  if(body.action==='cron')return await syncAll(req);
-  const u=await authUser(req);if(!u?.id)return json(req,{error:'Entre no Planner para sincronizar'},401);
-  const c:any=await getConnection(u.id);
-  if(body.action==='status')return json(req,{ok:true,connected:Boolean(c?.enabled),configured:Boolean(TODOIST_TOKEN),projectId:c?.project_id||null,lastSyncedAt:c?.last_synced_at||null});
-  if(body.action==='sync')return json(req,{ok:true,...await syncUser(u.id)});
-  return json(req,{error:'Ação desconhecida'},400)
- }catch(e){console.error(e);return json(req,{error:e instanceof Error?e.message:'Falha na sincronização',code:(e as any)?.code||null},500)}
-});
+Deno.serve(async(req:Request)=>{if(req.method==='OPTIONS')return new Response('ok',{headers:cors(req)});if(req.method!=='POST')return json(req,{error:'Método não permitido'},405);let body:any={};try{body=await req.json()}catch{};try{if(body.action==='cron')return await syncAll(req);const u=await authUser(req);if(!u?.id)return json(req,{error:'Entre no Planner para sincronizar'},401);const c:any=await getConnection(u.id);if(body.action==='status')return json(req,{ok:true,connected:Boolean(c?.enabled),configured:Boolean(TODOIST_TOKEN),projectId:c?.project_id||null,lastSyncedAt:c?.last_synced_at||null});if(body.action==='sync')return json(req,{ok:true,...await syncUser(u.id)});return json(req,{error:'Ação desconhecida'},400)}catch(e){console.error(e);return json(req,{error:e instanceof Error?e.message:'Falha na sincronização',code:(e as any)?.code||null},500)}});
