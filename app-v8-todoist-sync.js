@@ -52,7 +52,9 @@ async function pullFreshTodoistState(){
  return window.manualTodoistSync({silent:true});
 }
 
-function scheduleImmediateSync(){if(!currentUser||!navigator.onLine||!status.connected||!status.configured)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>window.manualTodoistSync({silent:true}),1200)}
+// Aguarda a gravação na nuvem terminar antes de sincronizar com o Todoist.
+// Evita que uma tarefa recém-criada com data futura seja enviada usando o estado anterior.
+function scheduleImmediateSync(){if(!currentUser||!navigator.onLine||!status.connected||!status.configured)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>window.manualTodoistSync({silent:true}),3500)}
 function fmtSyncDate(v){if(!v)return 'Ainda não sincronizado';try{return new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch{return 'Sincronizado'}}
 function injectSettings(replace=false){
  if(typeof page!=='undefined'&&page!=='settings')return;const grid=document.querySelector('#content .grid.g2');if(!grid)return;let card=document.getElementById('v8-todoist-card');if(card&&replace)card.remove();else if(card)return;card=document.createElement('div');card.className='card form';card.id='v8-todoist-card';const ready=Boolean(status.connected&&status.configured);
