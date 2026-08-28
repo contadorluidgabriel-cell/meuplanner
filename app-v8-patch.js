@@ -19,10 +19,23 @@ if(baseOpenTask&&baseSaveTask){
    },0)
  };
  window.saveTask=function(e,id){
-   const form=e.target,fd=new FormData(form),goalId=fd.get('goalId')||'',dayPriority=fd.get('dayPriority')==='on',beforeIds=new Set(data.tasks.map(t=>t.id));
+   const form=e.target,fd=new FormData(form),goalId=fd.get('goalId')||'',selectedDate=String(fd.get('date')||today()).slice(0,10),dayPriority=fd.get('dayPriority')==='on',beforeIds=new Set(data.tasks.map(t=>t.id));
    baseSaveTask(e,id);
    let task=id?data.tasks.find(t=>t.id===id):data.tasks.find(t=>!beforeIds.has(t.id));
-   if(task){task.goalId=goalId;task.dayPriority=dayPriority;save()}
+   if(task){
+     // A data escolhida no formulário é a fonte de verdade para a agenda da tarefa.
+     task.date=selectedDate;
+     task.goalId=goalId;
+     task.dayPriority=dayPriority;
+     task.updatedAt=new Date().toISOString();
+     // Se a tarefa deixou de ser de hoje, remove referências antigas do plano diário atual.
+     if(task.date!==today()){
+       const plan=data.dailyPlans?.[today()];
+       if(plan&&Array.isArray(plan.priorities))plan.priorities=plan.priorities.filter(taskId=>taskId!==task.id);
+     }
+     save();
+     if(typeof window.render==='function')window.render();
+   }
  }
 }
 
