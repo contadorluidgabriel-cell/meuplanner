@@ -1,67 +1,80 @@
-
 function currentMonthStart(){ return today().slice(0,7)+"-01"; }
+function pillarDerivedStatus(id){
+  const statuses=data.goals.filter(g=>g.pillarId===id&&g.status!=="done").map(g=>g.qualitativeStatus).filter(Boolean);
+  if(statuses.includes("regressing"))return {trend:"attention",label:"Atenção"};
+  if(statuses.includes("evolving"))return {trend:"improving",label:"Evoluindo"};
+  if(statuses.length&&statuses.every(s=>s==="stagnant"||s==="paused"))return {trend:"stable",label:"Estagnado"};
+  const r=latestReview(id,"pillar");
+  return {trend:r?.trend||"",label:trendLabel(r?.trend)};
+}
 function homeSummary(){
-  const month=currentMonthStart();
-  const recentReviews=data.reviews.filter(r=>r.date>=month);
-  const improving=recentReviews.filter(r=>r.trend==="improving").length;
-  const attention=recentReviews.filter(r=>r.trend==="attention").length;
-  const activeGoals=data.goals.filter(g=>g.status!=="done");
-  const advanced=activeGoals.filter(g=>goalProgress(g)>0).length;
-  const staleProjects=data.projects.filter(p=>p.status==="active"&&daysBetween((p.updatedAt||p.createdAt||"").slice(0,10))>21);
-  const events=data.timeline.filter(e=>e.date>=month).length;
-  return {improving,attention,advanced,activeGoals:activeGoals.length,staleProjects,events};
+  const month=currentMonthStart(), monthReviews=data.reviews.filter(r=>r.date>=month), activeGoals=data.goals.filter(g=>g.status!=="done");
+  return {
+    improving:activeGoals.filter(g=>g.qualitativeStatus==="evolving").length,
+    attention:activeGoals.filter(g=>g.qualitativeStatus==="regressing").length,
+    activeGoals:activeGoals.length,
+    checkins:data.weeklyCheckins.filter(x=>x.date>=month).length,
+    events:data.timeline.filter(e=>e.date>=month).length
+  };
+}
+function onboardingHTML(){
+  const hasGoal=data.goals.length>0,hasIndicator=data.indicators.length>0,hasWeekly=data.weeklyCheckins.length>0;
+  if(hasGoal&&hasIndicator&&hasWeekly)return "";
+  return `<section class="onboarding card"><div class="section-title compact"><div><span class="eyebrow">COMECE AQUI</span><h2>Monte seu primeiro ciclo de acompanhamento</h2></div></div><div class="onboarding-steps">
+    <button class="onboard-step ${hasGoal?"done":""}" onclick="showPage('objectives')"><span>${hasGoal?"✓":"1"}</span><div><b>Defina uma meta</b><small>Escolha algo concreto que você quer acompanhar.</small></div></button>
+    <button class="onboard-step ${hasIndicator?"done":""}" onclick="showPage('pillars')"><span>${hasIndicator?"✓":"2"}</span><div><b>Adicione um indicador</b><small>Peso, renda, clientes ou outro número importante.</small></div></button>
+    <button class="onboard-step ${hasWeekly?"done":""}" onclick="showPage('weekly')"><span>${hasWeekly?"✓":"3"}</span><div><b>Faça o primeiro check-in</b><small>Registre a semana e crie seu histórico.</small></div></button>
+  </div></section>`;
 }
 function renderHome(){
-  const s=homeSummary(), monthPlan=data.plans[planKey("month")]||{}, weekPlan=data.plans[planKey("week")]||{};
-  const pillarCards=activePillars().map(p=>{ const r=latestReview(p.id); const inds=data.indicators.filter(i=>i.pillarId===p.id); const goals=data.goals.filter(g=>g.pillarId===p.id&&g.status!=="done"); return `<button class="pillar-card" onclick="showPage('pillars','${p.id}')"><div class="pillar-head"><span class="pillar-icon">${esc(p.icon||"•")}</span><div><b>${esc(p.name)}</b><small>${trendLabel(r?.trend)}</small></div><span class="status-dot ${trendClass(r?.trend)}"></span></div><div class="pillar-stats"><span><b>${goals.length}</b> metas ativas</span><span><b>${inds.length}</b> indicadores</span></div>${r?.adjust?`<p>${esc(r.adjust).slice(0,120)}</p>`:`<p class="muted">Faça uma revisão para começar a acompanhar este pilar.</p>`}</button>`; }).join("");
-  const stalled=s.staleProjects.slice(0,3);
-  setHeader("Minha Vida",new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"2-digit",month:"long"}).format(new Date()),`<button class="btn" onclick="openQuickCapture()">＋ Capturar</button><button class="btn primary" onclick="openReviewForm()">Fazer revisão</button>`);
+  const s=homeSummary(),monthPlan=data.plans[planKey("month")]||{},weekPlan=data.plans[planKey("week")]||{};
+  const pillarCards=activePillars().map(p=>{
+    const st=pillarDerivedStatus(p.id),goals=data.goals.filter(g=>g.pillarId===p.id&&g.status!=="done"),inds=data.indicators.filter(i=>i.pillarId===p.id);
+    return `<div class="pillar-card"><button class="pillar-card-main" onclick="showPage('pillars','${p.id}')"><div class="pillar-head"><span class="pillar-icon">${esc(p.icon||"•")}</span><div><b>${esc(p.name)}</b><small>${esc(st.label)}</small></div><span class="status-dot ${trendClass(st.trend)}"></span></div><div class="pillar-stats"><span><b>${goals.length}</b> metas</span><span><b>${inds.length}</b> indicadores</span></div></button><button class="pillar-quick" onclick="openGoalForm(null,'','${p.id}')">＋ Adicionar meta</button></div>`;
+  }).join("");
+  setHeader("Minha Vida",new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"2-digit",month:"long"}).format(new Date()),`<button class="btn" onclick="openQuickCapture()">＋ Inbox</button><button class="btn primary" onclick="showPage('weekly')">✓ Check-in semanal</button>`);
   document.getElementById("content").innerHTML=`
-    <section class="hero-card"><div><span class="eyebrow">RESUMO DO PERÍODO</span><h2>${s.attention?"Há pontos que merecem atenção.":s.improving?"Há sinais de avanço no período.":"Construa o retrato deste período."}</h2><p>${s.improving} pilar(es) melhorando · ${s.attention} em atenção · ${s.advanced}/${s.activeGoals} metas com progresso · ${s.events} acontecimento(s) neste mês.</p></div><div class="hero-actions"><button class="btn primary" onclick="showPage('reviews')">Ver revisões</button><button class="btn" onclick="showPage('export')">Gerar resumo TXT</button></div></section>
-    <div class="section-title"><div><span class="eyebrow">AGORA</span><h2>Foco e direção</h2></div><button class="text-btn" onclick="showPage('planning')">Abrir planejamento →</button></div>
-    <div class="grid two"><div class="card focus-card"><span class="label">Foco do mês</span><h3>${esc(monthPlan.focus||"Ainda não definido")}</h3><p>${esc(monthPlan.priorities||"Defina o que realmente importa neste mês.")}</p></div><div class="card focus-card"><span class="label">Foco da semana</span><h3>${esc(weekPlan.focus||"Ainda não definido")}</h3><p>${esc(weekPlan.priorities||"Revise a semana anterior e escolha o foco da próxima.")}</p></div></div>
-    <div class="section-title"><div><span class="eyebrow">PILARES</span><h2>Como sua vida está</h2></div><button class="text-btn" onclick="showPage('pillars')">Ver todos →</button></div>
-    <div class="pillar-grid">${pillarCards||'<div class="empty">Crie seu primeiro pilar.</div>'}</div>
-    <div class="section-title"><div><span class="eyebrow">AÇÕES</span><h2>O que merece movimento</h2></div></div>
-    <div class="grid three">
-      <button class="action-card" onclick="openReviewForm()"><b>Revisar um pilar</b><span>Atualize percepção, avanços e ajustes.</span></button>
-      <button class="action-card" onclick="showPage('planning')"><b>Planejar o período</b><span>Defina foco, prioridades e check-ins.</span></button>
-      <button class="action-card" onclick="openQuickCapture()"><b>Registrar algo</b><span>Capture uma ideia, acontecimento ou decisão.</span></button>
-    </div>
-    ${stalled.length?`<div class="section-title"><div><span class="eyebrow">ATENÇÃO</span><h2>Projetos sem atualização</h2></div></div><div class="card list">${stalled.map(p=>`<div class="list-row"><div><b>${esc(p.title)}</b><small>${esc(pillarName(p.pillarId))} · ${daysBetween((p.updatedAt||p.createdAt).slice(0,10))} dias sem atualização</small></div><button class="btn small" onclick="openProjectForm('${p.id}')">Atualizar</button></div>`).join("")}</div>`:""}
-  `;
+    <section class="focus-month card"><div><span class="eyebrow">FOCO DO MÊS</span><h2>${esc(monthPlan.focus||"Defina a direção deste mês")}</h2><p>${esc(monthPlan.priorities||"Escolha o que realmente importa agora.")}</p></div><button class="btn" onclick="openPlanForm('month')">${monthPlan.focus?"Editar":"Definir foco"}</button></section>
+    <section class="focus-week card"><div><span class="label">FOCO DA SEMANA</span><h3>${esc(weekPlan.focus||"Ainda não definido")}</h3><p>${esc(weekPlan.priorities||"O próximo check-in pode definir o foco da semana.")}</p></div><button class="text-btn" onclick="showPage('weekly')">Fazer check-in →</button></section>
+    <div class="mobile-focus-actions"><button class="btn primary" onclick="showPage('weekly')">✓ Registrar semana</button><button class="btn" onclick="openQuickCapture()">＋ Inbox</button></div>
+    <div class="desktop-home-extra">
+      ${onboardingHTML()}
+      <div class="section-title"><div><span class="eyebrow">RESUMO DO PERÍODO</span><h2>Direção recente</h2></div><button class="text-btn" onclick="showPage('reviews')">Ver histórico →</button></div>
+      <div class="summary-strip"><div><b>${s.improving}</b><span>metas evoluindo</span></div><div><b>${s.attention}</b><span>pedem atenção</span></div><div><b>${s.checkins}</b><span>check-ins no mês</span></div><div><b>${s.events}</b><span>registros no mês</span></div></div>
+      <div class="section-title"><div><span class="eyebrow">PILARES</span><h2>Como sua vida está</h2></div><button class="text-btn" onclick="showPage('pillars')">Ver todos →</button></div>
+      <div class="pillar-grid">${pillarCards||'<div class="empty card">Crie seu primeiro pilar.</div>'}</div>
+      <div class="section-title"><div><span class="eyebrow">AÇÕES</span><h2>Registrar e ajustar</h2></div></div>
+      <div class="grid three"><button class="action-card primary-action" onclick="showPage('weekly')"><b>Check-in semanal</b><span>Atualize metas, hábitos, indicadores e o foco da próxima semana.</span></button><button class="action-card" onclick="openMonthlyReviewForm()"><b>Fechar o mês</b><span>Contexto, impacto e decisões para o próximo mês.</span></button><button class="action-card" onclick="openQuickCapture()"><b>Registrar algo</b><span>Guarde uma ideia, acontecimento ou decisão.</span></button></div>
+    </div>`;
 }
-
 function renderPillars(){
   setHeader("Pilares","As áreas que você decidiu acompanhar na sua vida.",`<button class="btn primary" onclick="openPillarForm()">＋ Novo pilar</button>`);
-  const cards=activePillars().map(p=>{const r=latestReview(p.id), obj=data.objectives.filter(o=>o.pillarId===p.id&&o.status!=="done").length, ind=data.indicators.filter(i=>i.pillarId===p.id).length;return `<button class="pillar-card large" onclick="showPage('pillars','${p.id}')"><div class="pillar-head"><span class="pillar-icon">${esc(p.icon||"•")}</span><div><b>${esc(p.name)}</b><small>${esc(p.description||"")}</small></div><span class="status-chip ${trendClass(r?.trend)}">${trendLabel(r?.trend)}</span></div><div class="pillar-stats"><span><b>${obj}</b> objetivos</span><span><b>${ind}</b> indicadores</span><span><b>${data.projects.filter(x=>x.pillarId===p.id&&x.status==="active").length}</b> projetos</span></div></button>`}).join("");
+  const cards=activePillars().map(p=>{
+    const st=pillarDerivedStatus(p.id),goals=data.goals.filter(g=>g.pillarId===p.id&&g.status!=="done").length,ind=data.indicators.filter(i=>i.pillarId===p.id).length;
+    return `<div class="pillar-card large"><button class="pillar-card-main" onclick="showPage('pillars','${p.id}')"><div class="pillar-head"><span class="pillar-icon">${esc(p.icon||"•")}</span><div><b>${esc(p.name)}</b><small>${esc(p.description||"")}</small></div><span class="status-chip ${trendClass(st.trend)}">● ${esc(st.label)}</span></div><div class="pillar-stats"><span><b>${goals}</b> metas</span><span><b>${ind}</b> indicadores</span><span><b>${data.projects.filter(x=>x.pillarId===p.id&&x.status==="active").length}</b> projetos</span></div></button><button class="pillar-quick" onclick="openGoalForm(null,'','${p.id}')">＋ Adicionar meta</button></div>`;
+  }).join("");
   document.getElementById("content").innerHTML=`<div class="pillar-grid">${cards}</div>${data.pillars.some(p=>p.archived)?`<div class="section-title"><h2>Arquivados</h2></div><div class="card list">${data.pillars.filter(p=>p.archived).map(p=>`<div class="list-row"><b>${esc(p.name)}</b><button class="btn small" onclick="restorePillar('${p.id}')">Restaurar</button></div>`).join("")}</div>`:""}`;
 }
-
 function renderPillar(id){
-  const p=pillar(id); if(!p){activePillarId=null;return renderPillars()}
-  const r=latestReview(id), objs=data.objectives.filter(o=>o.pillarId===id&&o.status!=="done"), inds=data.indicators.filter(i=>i.pillarId===id), projects=data.projects.filter(x=>x.pillarId===id&&x.status!=="done"), habits=data.habits.filter(x=>x.pillarId===id), actions=data.actions.filter(x=>x.pillarId===id);
-  setHeader(p.name,p.description||"Painel do pilar",`<button class="btn" onclick="activePillarId=null;showPage('pillars')">← Pilares</button><button class="btn" onclick="openPillarForm('${id}')">Editar</button><button class="btn primary" onclick="openReviewForm('${id}')">Revisar</button>`);
+  const p=pillar(id);if(!p){activePillarId=null;return renderPillars()}
+  const st=pillarDerivedStatus(id),r=latestReview(id,"pillar"),objs=data.objectives.filter(o=>o.pillarId===id&&o.status!=="done"),goals=data.goals.filter(g=>g.pillarId===id&&g.status!=="done"),inds=data.indicators.filter(i=>i.pillarId===id),projects=data.projects.filter(x=>x.pillarId===id&&x.status!=="done"),habits=data.habits.filter(x=>x.pillarId===id);
+  setHeader(p.name,p.description||"Painel do pilar",`<button class="btn" onclick="activePillarId=null;showPage('pillars')">← Pilares</button><button class="btn" onclick="openPillarForm('${id}')">Editar</button><button class="btn primary" onclick="openPillarReviewForm('${id}')">Revisar pilar</button>`);
   document.getElementById("content").innerHTML=`
-    <div class="pillar-overview"><div class="card"><span class="label">Situação</span><div class="big-status ${trendClass(r?.trend)}">${trendLabel(r?.trend)}</div><p>${r?.adjust?esc(r.adjust):"Ainda sem revisão registrada."}</p></div><div class="card"><span class="label">Última revisão</span><div class="metric-sm">${r?fmtDate(r.date):"—"}</div><p>${r?.better?`Melhorou: ${esc(r.better)}`:"Faça uma revisão para criar histórico."}</p></div><div class="card"><span class="label">Percepção</span><div class="metric-sm">${r?.perception?`${r.perception}/10`:"—"}</div><p>Percepção registrada por você na última revisão.</p></div></div>
-    ${blockHeader("Objetivos",`${objs.length} ativo(s)`,`openObjectiveForm(null,'${id}')`)}<div class="card list">${objs.length?objs.map(o=>`<div class="list-row"><div><b>${esc(o.title)}</b><small>${data.goals.filter(g=>g.objectiveId===o.id&&g.status!=="done").length} meta(s) vinculada(s)</small></div><button class="btn small" onclick="openObjectiveForm('${o.id}')">Abrir</button></div>`).join(""):'<div class="empty">Nenhum objetivo ativo.</div>'}</div>
+    <div class="pillar-overview"><div class="card"><span class="label">STATUS</span><div class="big-status ${trendClass(st.trend)}">● ${esc(st.label)}</div><p>Status baseado nos seus check-ins e revisões.</p></div><div class="card"><span class="label">ÚLTIMA REVISÃO</span><div class="metric-sm">${r?fmtDate(r.date):"—"}</div><p>${r?.adjust?esc(r.adjust):"Faça uma revisão específica deste pilar quando precisar de contexto."}</p></div><div class="card"><span class="label">METAS ATIVAS</span><div class="metric-sm">${goals.length}</div><p>${goals.filter(g=>g.qualitativeStatus==="evolving").length} evoluindo · ${goals.filter(g=>g.qualitativeStatus==="regressing").length} em atenção</p></div></div>
+    ${blockHeader("Metas",`${goals.length} ativa(s)`,`openGoalForm(null,'','${id}')`)}<div class="card list">${goals.length?goals.map(renderGoalRow).join(""):'<div class="empty">Nenhuma meta neste pilar.</div>'}</div>
+    ${blockHeader("Objetivos",`${objs.length} ativo(s)`,`openObjectiveForm(null,'${id}')`)}<div class="card list">${objs.length?objs.map(o=>`<div class="list-row"><div><b>${esc(o.title)}</b><small>${data.goals.filter(g=>g.objectiveId===o.id&&g.status!=="done").length} meta(s)</small></div><button class="btn small" onclick="openObjectiveForm('${o.id}')">Editar</button></div>`).join(""):'<div class="empty">Nenhum objetivo ativo.</div>'}</div>
     ${blockHeader("Indicadores",`${inds.length} acompanhado(s)`,`openIndicatorForm(null,'${id}')`)}<div class="indicator-grid">${inds.length?inds.map(renderIndicatorCard).join(""):'<div class="empty card">Nenhum indicador neste pilar.</div>'}</div>
-    ${blockHeader("Projetos",`${projects.length} em andamento`,`openProjectForm(null,'${id}')`)}<div class="grid two">${projects.length?projects.map(renderProjectCard).join(""):'<div class="empty card">Nenhum projeto em andamento.</div>'}</div>
     ${blockHeader("Hábitos acompanhados",`${habits.length} hábito(s)`,`openTrackingForm('habit',null,'${id}')`)}<div class="card list">${habits.length?habits.map(x=>trackingRow("habit",x)).join(""):'<div class="empty">Nenhum hábito acompanhado aqui.</div>'}</div>
-    ${blockHeader("Ações acompanhadas",`${actions.length} conjunto(s)`,`openTrackingForm('action',null,'${id}')`)}<div class="card list">${actions.length?actions.map(x=>trackingRow("action",x)).join(""):'<div class="empty">Nenhuma ação acompanhada aqui.</div>'}</div>
-  `;
+    ${projects.length?`${blockHeader("Projetos",`${projects.length} em andamento`,`openProjectForm(null,'${id}')`)}<div class="grid two">${projects.map(renderProjectCard).join("")}</div>`:""}`;
 }
-function blockHeader(title,sub,action){ return `<div class="section-title"><div><h2>${title}</h2><span>${sub}</span></div><button class="text-btn" onclick="${action}">＋ Adicionar</button></div>`; }
-
+function blockHeader(title,sub,action){return `<div class="section-title"><div><h2>${title}</h2><span>${sub}</span></div><button class="text-btn" onclick="${action}">＋ Adicionar</button></div>`;}
 function openPillarForm(id=null){
   const p=id?pillar(id):null;
-  openModal(p?"Editar pilar":"Novo pilar",`<form class="form" onsubmit="savePillar(event,'${id||""}')"><div class="form-grid two"><label>Nome<input name="name" required value="${esc(p?.name||"")}" placeholder="Ex.: Financeiro"></label><label>Ícone / símbolo<input name="icon" maxlength="3" value="${esc(p?.icon||"•")}"></label></div><label>Descrição<textarea name="description" rows="3" placeholder="O que este pilar representa?">${esc(p?.description||"")}</textarea></label><div class="modal-actions">${p?'<button type="button" class="btn danger" onclick="archivePillar(\''+p.id+'\')">Arquivar</button>':''}<button class="btn primary">Salvar pilar</button></div></form>`);
+  openModal(p?"Editar pilar":"Novo pilar",`<form class="form" onsubmit="savePillar(event,'${id||""}')"><div class="form-grid two"><label>Nome<input name="name" required value="${esc(p?.name||"")}" placeholder="Ex.: Finanças"></label><label>Ícone / símbolo<input name="icon" maxlength="3" value="${esc(p?.icon||"•")}"></label></div><label>Descrição<textarea name="description" rows="3">${esc(p?.description||"")}</textarea></label><div class="modal-actions">${p?`<button type="button" class="btn danger" onclick="archivePillar('${p.id}')">Arquivar</button>`:""}<button class="btn primary">Salvar pilar</button></div></form>`);
 }
-function savePillar(e,id){e.preventDefault();const f=new FormData(e.target), obj={name:String(f.get("name")||"").trim(),icon:String(f.get("icon")||"•").trim()||"•",description:String(f.get("description")||"").trim()}; if(id)Object.assign(pillar(id),obj,{updatedAt:nowISO()});else data.pillars.push(Object.assign({id:uid("pil"),archived:false,createdAt:nowISO()},obj));persist();closeModal();render();toast("Pilar salvo");}
+function savePillar(e,id){e.preventDefault();const f=new FormData(e.target),obj={name:String(f.get("name")||"").trim(),icon:String(f.get("icon")||"•").trim()||"•",description:String(f.get("description")||"").trim()};if(id)Object.assign(pillar(id),obj,{updatedAt:nowISO()});else data.pillars.push(Object.assign({id:uid("pil"),archived:false,createdAt:nowISO()},obj));persist();closeModal();render();toast("Pilar salvo");}
 function archivePillar(id){if(!confirmAction("Arquivar este pilar? Os dados vinculados serão preservados."))return;pillar(id).archived=true;activePillarId=null;persist();closeModal();showPage("pillars");}
 function restorePillar(id){pillar(id).archived=false;persist();render();}
-
-function pillarOptions(selected="",allowEmpty=true){ return `${allowEmpty?`<option value="">Sem pilar</option>`:""}${activePillars().map(p=>`<option value="${p.id}" ${p.id===selected?"selected":""}>${esc(p.name)}</option>`).join("")}`; }
-function objectiveOptions(selected="",pillarId=""){ const arr=data.objectives.filter(o=>!pillarId||o.pillarId===pillarId||!o.pillarId); return `<option value="">Sem objetivo</option>${arr.map(o=>`<option value="${o.id}" ${o.id===selected?"selected":""}>${esc(o.title)}</option>`).join("")}`; }
-function goalOptions(selected="",objectiveId=""){ const arr=data.goals.filter(g=>!objectiveId||g.objectiveId===objectiveId); return `<option value="">Sem meta</option>${arr.map(g=>`<option value="${g.id}" ${g.id===selected?"selected":""}>${esc(g.title)}</option>`).join("")}`; }
-
+function pillarOptions(selected="",allowEmpty=true){return `${allowEmpty?'<option value="">Sem pilar</option>':""}${activePillars().map(p=>`<option value="${p.id}" ${p.id===selected?"selected":""}>${esc(p.name)}</option>`).join("")}`;}
+function objectiveOptions(selected="",pillarId=""){const arr=data.objectives.filter(o=>!pillarId||o.pillarId===pillarId||!o.pillarId);return `<option value="">Sem objetivo</option>${arr.map(o=>`<option value="${o.id}" ${o.id===selected?"selected":""}>${esc(o.title)}</option>`).join("")}`;}
+function goalOptions(selected="",objectiveId=""){const arr=data.goals.filter(g=>!objectiveId||g.objectiveId===objectiveId);return `<option value="">Sem meta</option>${arr.map(g=>`<option value="${g.id}" ${g.id===selected?"selected":""}>${esc(g.title)}</option>`).join("")}`;}

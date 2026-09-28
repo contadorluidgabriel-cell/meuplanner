@@ -1,7 +1,7 @@
-# Meu Planner Digital
+# Minha Vida
 
-Fonte de código do Meu Planner Digital.
+Painel pessoal de direção e evolução.
 
-Versão atual preparada: V7.2 — notificações em segundo plano via Web Push.
+A V2 acompanha pilares, objetivos, metas numéricas, indicadores, check-ins semanais, revisões mensais e histórico. Não é agenda nem gerenciador diário de tarefas.
 
-Deploy: Vercel conectado ao branch `main`.
+Produção: https://meuplannerdigital.vercel.app
