@@ -87,9 +87,9 @@ function openPlanForm(type){
 function savePlan(e,type){
   e.preventDefault();const f=new FormData(e.target),key=planKey(type),prev=data.plans[key]||{};
   if(type!=="month"){data.plans[key]=Object.assign({},prev,{type,key,label:periodLabel(type),focus:String(f.get("focus")||"").trim(),notes:String(f.get("notes")||"").trim(),updatedAt:nowISO()});persist();closeModal();render();toast("Planejamento salvo");return;}
-  const goalTargets={},trackedGoalIds=new Set(f.getAll("trackedGoalIds").map(String));
-  data.goals.filter(g=>g.status!=="done").forEach(g=>{const raw=f.get(`goalTarget_${g.id}`);if(raw!==null&&raw!==""){goalTargets[g.id]=Number(raw);trackedGoalIds.add(g.id);}});
-  data.plans[key]=Object.assign({},prev,{type:"month",key,label:periodLabel("month"),focus:String(f.get("focus")||"").trim(),goalTargets,trackedGoalIds:[...trackedGoalIds],trackedIndicatorIds:f.getAll("trackedIndicatorIds").map(String),trackedHabitIds:f.getAll("trackedHabitIds").map(String),context:String(f.get("context")||"").trim(),successDefinition:String(f.get("successDefinition")||"").trim(),updatedAt:nowISO()});
+  const goalTargets={},trackedGoalIds=new Set(f.getAll("trackedGoalIds").map(String)),startGoalValues=Object.assign({},prev.startGoalValues||{});
+  data.goals.filter(g=>g.status!=="done").forEach(g=>{const raw=f.get(`goalTarget_${g.id}`);if(raw!==null&&raw!==""){goalTargets[g.id]=Number(raw);trackedGoalIds.add(g.id);}if(trackedGoalIds.has(g.id)&&startGoalValues[g.id]===undefined)startGoalValues[g.id]=goalCurrent(g);});
+  data.plans[key]=Object.assign({},prev,{type:"month",key,label:periodLabel("month"),focus:String(f.get("focus")||"").trim(),goalTargets,startGoalValues,trackedGoalIds:[...trackedGoalIds],trackedIndicatorIds:f.getAll("trackedIndicatorIds").map(String),trackedHabitIds:f.getAll("trackedHabitIds").map(String),context:String(f.get("context")||"").trim(),successDefinition:String(f.get("successDefinition")||"").trim(),updatedAt:nowISO()});
   persist();closeModal();render();toast("Mês planejado");
 }
 
