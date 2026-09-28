@@ -3,36 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f7f8fa">
+<meta name="theme-color" content="#f6f7f9">
+<meta name="description" content="Minha Vida — painel pessoal de direção, evolução e revisão.">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Meu Planner Digital V8 — Life Execution System</title>
-<link rel="stylesheet" href="/styles-01.css">
-<link rel="stylesheet" href="/styles-02.css">
-<link rel="stylesheet" href="/styles-03.css">
-<link rel="stylesheet" href="/styles-mobile.css">
-<link rel="stylesheet" href="/styles-mobile-polish.css">
-<link rel="stylesheet" href="/styles-mobile-inbox-fix.css">
-<link rel="stylesheet" href="/styles-mobile-settings-fix.css">
-<link rel="stylesheet" href="/styles-v8.css">
-<link rel="stylesheet" href="/styles-premium.css?v=1">
-<link rel="stylesheet" href="/styles-premium-mobile-fix.css?v=1">
-<link rel="stylesheet" href="/styles-premium-planner-mobile.css?v=1">
-<link rel="stylesheet" href="/styles-goal-process.css?v=1">
+<title>Minha Vida</title>
+<link rel="stylesheet" href="/minha-vida-v1.css?v=1">
 </head>
 <body>
 <div class="app">
-<aside class="side">
-  <div class="brand">Meu <span>Planner Digital</span></div>
-  <nav class="nav" id="nav"></nav>
-  <div class="side-foot"><div class="account-panel"><div class="sync-pill"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Somente neste dispositivo</span></div><div class="account-email" id="accountEmail">Modo visitante</div><button class="btn" id="accountButton" style="width:100%" onclick="openAccount()">☁ Entrar para sincronizar</button></div></div>
-</aside>
-<main class="main"><div class="top"><div><h1 id="pageTitle">☀️ Hoje</h1><p id="pageSub"></p></div><div class="actions" id="topActions"></div></div><div id="content"></div></main>
+  <aside class="side">
+    <div class="brand"><div class="brand-mark">MV</div><div class="brand-text"><b>Minha Vida</b><small>direção e evolução</small></div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-bottom">
+      <div class="sync-line"><span class="sync-dot" id="syncDot"></span><span id="syncText">Neste dispositivo</span></div>
+      <div class="account-row"><div><b id="accountEmail">Dados locais</b><small>Minha Vida V1</small></div><button class="btn small" id="accountButton" onclick="openAccount()">Entrar</button></div>
+      <button class="nav-item" style="width:100%;margin-top:4px" onclick="openSettings()"><span>⚙</span><b>Configurações</b></button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="top">
+      <div><button class="menu-btn" onclick="toggleMenu()" aria-label="Abrir menu">☰</button><div><h1 id="pageTitle">Minha Vida</h1><p id="pageSub"></p></div></div>
+      <div class="top-actions" id="topActions"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
 </div>
-<button class="mobile-fab" type="button" aria-label="Captura rápida" onclick="openQuick()"><span>＋</span></button>
-<div class="modal" id="modal"><div class="dialog"><div class="dialog-head"><h2 id="modalTitle"></h2><button class="x" onclick="closeModal()" aria-label="Fechar">✕</button></div><div id="modalBody"></div></div></div>
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="dialog"><div class="dialog-head"><h2 id="modalTitle"></h2><button class="x" onclick="closeModal()" aria-label="Fechar">×</button></div><div class="dialog-body" id="modalBody"></div></div></div>
 <div class="toast" id="toast"></div>
-<script src="/app-01.js"></script><script src="/app-02.js"></script><script src="/app-03.js"></script><script src="/app-04.js"></script><script src="/app-05.js"></script><script src="/app-06.js"></script><script src="/app-07.js"></script><script src="/app-08.js"></script><script src="/app-09.js"></script><script src="/app-10.js"></script><script src="/app-11.js"></script><script src="/app-12.js"></script><script src="/app-v8.js"></script><script src="/app-v8-patch.js?v=3"></script><script src="/app-v8-intelligence.js"></script><script src="/app-v8-polish.js"></script><script src="/app-v8-commitments.js"></script><script src="/app-v8-habits-fix.js"></script><script src="/app-v8-calendar-sync.js"></script><script src="/app-v8-tasks-sync.js"></script><script src="/app-v8-habit-form-polish.js"></script><script src="/app-v8-todoist-sync.js?v=3"></script><script src="/app-v8-goal-process.js?v=2"></script><script src="/app-v8-today-habit-completion-fix.js"></script>
-</body></html>
+<script src="/mv-core.js?v=1"></script>
+<script src="/mv-pillars.js?v=1"></script>
+<script src="/mv-goals.js?v=1"></script>
+<script src="/mv-projects.js?v=1"></script>
+<script src="/mv-review.js?v=1"></script>
+<script src="/mv-cloud.js?v=1"></script>
+</body>
+</html>
