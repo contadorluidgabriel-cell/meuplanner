@@ -24,7 +24,7 @@ function monthlyPlanReviewContext(month){
   if(p.focus)lines.push(`Foco: ${p.focus}`);
   if(p.successDefinition)lines.push(`Um bom mês seria: ${p.successDefinition}`);
   if(p.context)lines.push(`Contexto previsto: ${p.context}`);
-  targets.forEach(([id,target])=>{const g=goal(id);if(g)lines.push(`• ${g.title}: ${goalCurrent(g)} ${g.unit||""} · marco planejado ${target} ${g.unit||""}`);});
+  targets.forEach(([id,target])=>{const g=goal(id);if(g){const start=p.startGoalValues?.[id];lines.push(`• ${g.title}: ${start!==undefined?start+" "+(g.unit||"")+" → ":""}${goalCurrent(g)} ${g.unit||""} · marco planejado ${target} ${g.unit||""}`);}});
   return lines.join("\n")||"Este mês não teve planejamento mensal estruturado.";
 }
 function openMonthlyReviewForm(date=today()){
