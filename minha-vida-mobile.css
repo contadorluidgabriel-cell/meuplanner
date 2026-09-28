@@ -4,3 +4,16 @@
 @media(max-width:560px){
   .top-actions .btn{font-size:11px;padding:8px 9px}.section-title{margin-top:30px}.pillar-card-main{padding:16px}.pillar-stats{gap:12px;flex-wrap:wrap}.goal-values{align-items:flex-start;flex-direction:column;gap:1px}.card{padding:18px}.checkin-section{padding:19px}.checkin-section h2{font-size:19px}.hero-actions .btn{flex:1}.list{padding:4px 14px}.summary-strip{grid-template-columns:1fr 1fr}.future-note{font-size:12px}
 }
+
+
+/* V3 mobile */
+@media(max-width:900px){
+  .top{padding:14px 15px 11px}.content{padding:18px 14px 104px}.mobile-nav{padding-top:6px;background:color-mix(in srgb,var(--surface) 91%,transparent);box-shadow:0 -12px 35px rgba(0,0,0,.08)}.mobile-nav-item{min-height:50px}.mobile-nav-item.checkin span{width:36px;height:36px}
+  .life-hero{display:block;min-height:0;border-radius:22px}.life-hero-main{padding:25px 22px 20px}.hero-topline{align-items:flex-start}.hero-edit{font-size:9px}.life-hero-main h2{font-size:29px;margin:13px 0 10px}.life-hero-main>p{font-size:12px}.hero-signals{margin-top:20px}.life-hero-week{margin:0 10px 10px;padding:18px;border-radius:16px}.life-hero-week .btn{display:none}.mobile-focus-actions{margin-top:10px}
+  .month-plan-hero{display:block;min-height:0;padding:25px 22px;border-radius:22px}.month-plan-copy h2{font-size:29px}.month-plan-copy p{font-size:12px}.month-plan-meta{margin-top:24px;min-width:0}.carry-card,.week-rhythm-card{align-items:flex-start;flex-direction:column}.planning-grid,.planning-grid.lower{grid-template-columns:1fr}.planning-panel{min-height:0;padding:20px}.month-milestone{align-items:flex-start;flex-direction:column}.milestone-values{padding-left:18px}.tracking-chips{gap:6px}
+  .dialog.wide{width:100%;max-height:94vh}.plan-step{grid-template-columns:1fr;gap:10px;padding:24px 0}.plan-step-number{width:34px;height:34px;border-radius:11px}.plan-step-body h3{font-size:19px}.plan-goal-row{grid-template-columns:28px 1fr 105px;padding:12px 10px}.plan-goal-current{display:none}.plan-goal-final{display:none}.plan-goal-target label{font-size:8px}.tracking-groups{grid-template-columns:1fr}.plan-save-bar{bottom:-18px;margin:0 -18px -18px;padding:12px 18px;align-items:stretch;flex-direction:column}.plan-save-bar .btn{width:100%}
+  .checkin-intro{align-items:flex-start;flex-direction:column}.checkin-intro h2{font-size:24px}.checkin-progress{width:100%;text-align:left}.checkin-section{padding:20px}.section-help{margin-top:-10px}.review-plan-context pre{font-size:10px}
+}
+@media(max-width:560px){
+  .life-hero-main h2,.month-plan-copy h2{font-size:27px}.hero-signals span{padding:6px 8px}.month-plan-meta{grid-template-columns:1fr 1fr}.month-plan-meta .btn{width:100%}.plan-goal-row{grid-template-columns:25px minmax(110px,1fr) 100px;gap:6px}.plan-goal-name b{font-size:10px}.tracking-option{padding:9px}.dialog-body{padding:17px}.insight-grid{grid-template-columns:1fr 1fr}
+}

@@ -26,25 +26,36 @@ function onboardingHTML(){
     <button class="onboard-step ${hasWeekly?"done":""}" onclick="showPage('weekly')"><span>${hasWeekly?"✓":"3"}</span><div><b>Faça o primeiro check-in</b><small>Registre a semana e crie seu histórico.</small></div></button>
   </div></section>`;
 }
+
 function renderHome(){
   const s=homeSummary(),monthPlan=data.plans[planKey("month")]||{},weekPlan=data.plans[planKey("week")]||{};
+  const goalTargets=Object.entries(monthPlan.goalTargets||{}).filter(([,v])=>v!==""&&v!==null&&v!==undefined);
+  const trackedCount=(monthPlan.trackedGoalIds?.length||0)+(monthPlan.trackedIndicatorIds?.length||0)+(monthPlan.trackedHabitIds?.length||0);
   const pillarCards=activePillars().map(p=>{
     const st=pillarDerivedStatus(p.id),goals=data.goals.filter(g=>g.pillarId===p.id&&g.status!=="done"),inds=data.indicators.filter(i=>i.pillarId===p.id);
     return `<div class="pillar-card"><button class="pillar-card-main" onclick="showPage('pillars','${p.id}')"><div class="pillar-head"><span class="pillar-icon">${esc(p.icon||"•")}</span><div><b>${esc(p.name)}</b><small>${esc(st.label)}</small></div><span class="status-dot ${trendClass(st.trend)}"></span></div><div class="pillar-stats"><span><b>${goals.length}</b> metas</span><span><b>${inds.length}</b> indicadores</span></div></button><button class="pillar-quick" onclick="openGoalForm(null,'','${p.id}')">＋ Adicionar meta</button></div>`;
   }).join("");
-  setHeader("Minha Vida",new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"2-digit",month:"long"}).format(new Date()),`<button class="btn" onclick="openQuickCapture()">＋ Inbox</button><button class="btn primary" onclick="showPage('weekly')">✓ Check-in semanal</button>`);
+  setHeader("Minha Vida",new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"2-digit",month:"long"}).format(new Date()),`<button class="btn ghost" onclick="openQuickCapture()">＋ Inbox</button><button class="btn primary" onclick="showPage('weekly')">✓ Check-in semanal</button>`);
   document.getElementById("content").innerHTML=`
-    <section class="focus-month card"><div><span class="eyebrow">FOCO DO MÊS</span><h2>${esc(monthPlan.focus||"Defina a direção deste mês")}</h2><p>${esc(monthPlan.priorities||"Escolha o que realmente importa agora.")}</p></div><button class="btn" onclick="openPlanForm('month')">${monthPlan.focus?"Editar":"Definir foco"}</button></section>
-    <section class="focus-week card"><div><span class="label">FOCO DA SEMANA</span><h3>${esc(weekPlan.focus||"Ainda não definido")}</h3><p>${esc(weekPlan.priorities||"O próximo check-in pode definir o foco da semana.")}</p></div><button class="text-btn" onclick="showPage('weekly')">Fazer check-in →</button></section>
+    <section class="life-hero">
+      <div class="life-hero-glow"></div>
+      <div class="life-hero-main">
+        <div class="hero-topline"><span class="eyebrow">FOCO DO MÊS · ${esc(periodLabel("month").toUpperCase())}</span><button class="hero-edit" onclick="showPage('planning')">Planejamento ↗</button></div>
+        <h2>${esc(monthPlan.focus||"Defina a direção deste mês")}</h2>
+        <p>${esc(monthPlan.successDefinition||"O mês ganha sentido quando você define onde quer chegar e o que vale acompanhar.")}</p>
+        <div class="hero-signals"><span><b>${goalTargets.length}</b> marcos do mês</span><span><b>${trackedCount}</b> acompanhamentos</span><span><b>${s.checkins}</b> check-ins</span></div>
+      </div>
+      <div class="life-hero-week"><span class="eyebrow">AGORA · FOCO DA SEMANA</span><h3>${esc(weekPlan.focus||"Ainda não definido")}</h3><p>${esc(weekPlan.priorities||"Seu próximo check-in define a direção da semana seguinte.")}</p><button class="btn primary" onclick="showPage('weekly')">Registrar semana</button></div>
+    </section>
     <div class="mobile-focus-actions"><button class="btn primary" onclick="showPage('weekly')">✓ Registrar semana</button><button class="btn" onclick="openQuickCapture()">＋ Inbox</button></div>
     <div class="desktop-home-extra">
       ${onboardingHTML()}
-      <div class="section-title"><div><span class="eyebrow">RESUMO DO PERÍODO</span><h2>Direção recente</h2></div><button class="text-btn" onclick="showPage('reviews')">Ver histórico →</button></div>
-      <div class="summary-strip"><div><b>${s.improving}</b><span>metas evoluindo</span></div><div><b>${s.attention}</b><span>pedem atenção</span></div><div><b>${s.checkins}</b><span>check-ins no mês</span></div><div><b>${s.events}</b><span>registros no mês</span></div></div>
+      <div class="section-title"><div><span class="eyebrow">RESUMO DO PERÍODO</span><h2>O que os registros mostram</h2></div><button class="text-btn" onclick="showPage('reviews')">Ver histórico →</button></div>
+      <div class="insight-grid"><div class="insight-card"><span class="insight-icon good">↗</span><div><b>${s.improving}</b><span>metas evoluindo</span></div></div><div class="insight-card"><span class="insight-icon danger">!</span><div><b>${s.attention}</b><span>pedem atenção</span></div></div><div class="insight-card"><span class="insight-icon neutral">✓</span><div><b>${s.checkins}</b><span>check-ins no mês</span></div></div><div class="insight-card"><span class="insight-icon neutral">◇</span><div><b>${s.events}</b><span>registros no histórico</span></div></div></div>
       <div class="section-title"><div><span class="eyebrow">PILARES</span><h2>Como sua vida está</h2></div><button class="text-btn" onclick="showPage('pillars')">Ver todos →</button></div>
       <div class="pillar-grid">${pillarCards||'<div class="empty card">Crie seu primeiro pilar.</div>'}</div>
       <div class="section-title"><div><span class="eyebrow">AÇÕES</span><h2>Registrar e ajustar</h2></div></div>
-      <div class="grid three"><button class="action-card primary-action" onclick="showPage('weekly')"><b>Check-in semanal</b><span>Atualize metas, hábitos, indicadores e o foco da próxima semana.</span></button><button class="action-card" onclick="openMonthlyReviewForm()"><b>Fechar o mês</b><span>Contexto, impacto e decisões para o próximo mês.</span></button><button class="action-card" onclick="openQuickCapture()"><b>Registrar algo</b><span>Guarde uma ideia, acontecimento ou decisão.</span></button></div>
+      <div class="grid three"><button class="action-card primary-action" onclick="showPage('weekly')"><span class="action-glyph">✓</span><b>Check-in semanal</b><span>Atualize os registros escolhidos para este mês.</span></button><button class="action-card" onclick="openMonthlyReviewForm()"><span class="action-glyph">↻</span><b>Fechar o mês</b><span>Entenda o que aconteceu, o impacto e o próximo ajuste.</span></button><button class="action-card" onclick="openQuickCapture()"><span class="action-glyph">＋</span><b>Registrar algo</b><span>Guarde uma ideia, acontecimento ou decisão.</span></button></div>
     </div>`;
 }
 function renderPillars(){

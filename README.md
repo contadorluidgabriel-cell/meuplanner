@@ -2,6 +2,6 @@
 
 Painel pessoal de direção e evolução.
 
-A V2 acompanha pilares, objetivos, metas numéricas, indicadores, check-ins semanais, revisões mensais e histórico. Não é agenda nem gerenciador diário de tarefas.
+A V3 organiza o ciclo **planejar o mês → registrar as semanas → revisar → ajustar**. O planejamento mensal conecta foco, marcos das metas, acompanhamentos, contexto e um critério humano de avanço, sem virar agenda ou lista diária de tarefas.
 
 Produção: https://meuplannerdigital.vercel.app

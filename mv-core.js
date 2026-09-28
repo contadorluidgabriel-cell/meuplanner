@@ -3,7 +3,7 @@ const SESSION_KEY = "planner_v7_supabase_session";
 const SUPABASE_URL = "https://witwoqilxjnviqcxjlwl.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Ht7BPNKlWhgSAYjd2LKUEQ_zMYqNXVu";
 const CLOUD_SCHEMA = 8;
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "3.0.0";
 
 let currentPage = "home";
 let activePillarId = null;
@@ -124,8 +124,8 @@ function applyTheme(){
 }
 function setSync(kind,label){ const dot=document.getElementById("syncDot"),txt=document.getElementById("syncText");if(dot)dot.className=`sync-dot ${kind||""}`;if(txt)txt.textContent=label; }
 function toast(msg){ const el=document.getElementById("toast");if(!el)return;el.textContent=msg;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),2200); }
-function openModal(title,html){ document.getElementById("modalTitle").textContent=title;document.getElementById("modalBody").innerHTML=html;document.getElementById("modal").classList.add("open"); }
-function closeModal(){ document.getElementById("modal").classList.remove("open");document.getElementById("modalBody").innerHTML=""; }
+function openModal(title,html,wide=false){ const dialog=document.querySelector(".dialog");if(dialog)dialog.classList.toggle("wide",!!wide);document.getElementById("modalTitle").textContent=title;document.getElementById("modalBody").innerHTML=html;document.getElementById("modal").classList.add("open"); }
+function closeModal(){ document.getElementById("modal").classList.remove("open");document.getElementById("modalBody").innerHTML="";document.querySelector(".dialog")?.classList.remove("wide"); }
 function confirmAction(message){ return confirm(message); }
 
 function renderNav(){
